@@ -24,6 +24,7 @@ public class DBObject {
     public void createObject(){
         System.out.println("we're trying to create the parent DBObject");
     }
+    public void dropObject() { System.out.println("we're trying to drop the parent DBObject");}
 
     public boolean dbObjectExists(){
         return false;

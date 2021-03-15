@@ -14,18 +14,6 @@ public class UseCommand extends Command {
         super(useArgs);
     }
 
-    public boolean processCommand(Database currentDB){
-        try {
-            parseCommand();
-            interpretCommand();
-        }
-        catch (DatabaseException dbe){
-            System.out.println("We couldn't parse/interpret the message...");
-            dbe.printStackTrace();
-            return false;
-        }
-        return true;
-    }
     public void parseCommand() throws DatabaseException{
         if (followingSQLCommands.length != 1){
             System.out.println("There are an incorrect number of arguments for USE");

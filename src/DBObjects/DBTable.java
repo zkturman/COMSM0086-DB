@@ -2,6 +2,7 @@ package DBObjects;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.jar.Attributes;
 
 public class DBTable extends DBObject {
     String attributePath;
@@ -17,9 +18,22 @@ public class DBTable extends DBObject {
         this.owningDatabase = owningDatabase;
     }
 
+    public void setTableAttributes(ArrayList<TableAttribute> tableAttributes) {
+        this.tableAttributes = tableAttributes;
+    }
+
+    public void setTableFilePaths() {
+        attributePath = createPath("txt");
+        tablePath = createPath("tsv");
+    }
+
+    public String createPath(String extension){
+        return owningDatabase.getObjectName() + File.separator + objectName + "." + extension;
+    }
+
     public DBTable(String tableName){
         super(tableName);
-        tableAttributes = new ArrayList<>();
+        tableAttributes = new ArrayList<TableAttribute>();
     }
 
     private File returnDBFile(String fileName, String fileExtension){
@@ -36,8 +50,8 @@ public class DBTable extends DBObject {
 
     public void createObject(){
         System.out.println("we're trying to create a table");
-        this.tablePath = owningDatabase.getObjectName() + File.separator + objectName + ".tsv";
-        this.attributePath = owningDatabase.getObjectName() + File.separator + objectName + ".txt";
+        tablePath = createPath("tsv");
+        attributePath = createPath("txt");
         this.createNewFile(tablePath);
         this.createNewFile(attributePath);
     }
@@ -56,15 +70,36 @@ public class DBTable extends DBObject {
         }
     }
 
+    public void dropObject(){
+        File tableToDrop = new File(tablePath);
+        File attributesToDrop = new File(attributePath);
+        try{
+            if (!tableToDrop.delete()){
+                System.out.println("Could not delete table file");
+            }
+            if (!attributesToDrop.delete()){
+                System.out.println("Could not delete attribute file");
+            }
+        }
+        catch (SecurityException se){
+            se.printStackTrace();
+        }
+    }
+
     public void defineAttributeFile(){
         File attributeFile = new File(attributePath);
+        System.out.println("this is the attribute file: " + attributePath);
         if (attributeFile.exists() && tableAttributes.size() > 0){
             try {
                 FileWriter writer = new FileWriter(attributePath);
                 BufferedWriter buffWriter = new BufferedWriter(writer);
                 for (int i = 0; i < tableAttributes.size(); i++) {
+                    System.out.println("We should have written " + tableAttributes.get(i).objectName);
                     buffWriter.write(tableAttributes.get(i).objectName);
+                    buffWriter.newLine();
+                    buffWriter.flush();
                 }
+                buffWriter.close();
             }
             catch (IOException ioe){
                 System.out.println("We weren't able to write the attribute file");

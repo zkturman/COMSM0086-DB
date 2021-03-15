@@ -1,5 +1,6 @@
 package DBObjects;
 import java.io.*;
+import java.util.List;
 
 public class Database extends DBObject{
     public Database(String databaseName){
@@ -16,6 +17,25 @@ public class Database extends DBObject{
             }
         }
         catch(SecurityException se){
+            se.printStackTrace();
+        }
+    }
+
+    public void dropObject(){
+        System.out.println("we're trying to drop a database");
+        File dbToDrop = new File(objectName);
+        File[] tablesToDrop = dbToDrop.listFiles();
+        try{
+            for(int i = 0; i < tablesToDrop.length; i++){
+                if (!tablesToDrop[i].delete()){
+                    System.out.println("Failed to drop database tables");
+                }
+            }
+            if (!dbToDrop.delete()){
+                System.out.println("Failed to drop database");
+            }
+        }
+        catch (SecurityException se){
             se.printStackTrace();
         }
     }

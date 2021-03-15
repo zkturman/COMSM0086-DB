@@ -1,4 +1,5 @@
 package DBObjects.DBCommands;
+import DBException.DBObjectDoesNotExistException;
 import DBObjects.*;
 
 import DBException.DatabaseException;
@@ -34,6 +35,7 @@ public class Command extends DBObject {
             case "USE":
                 return new UseCommand(commandString);
             case "DROP":
+                return new DropCommand(commandString);
 
 
             default:
@@ -42,6 +44,17 @@ public class Command extends DBObject {
     }
 
     public boolean processCommand(Database currentDB) {
+        workingDatabase = currentDB;
+        try {
+            parseCommand();
+            interpretCommand();
+        }
+        catch (DatabaseException dbe){
+            System.out.println("We couldn't parse the message...");
+            dbe.printStackTrace();
+            return false;
+        }
+        //does this need to be boolean??
         return true;
     }
 
@@ -52,12 +65,11 @@ public class Command extends DBObject {
     }
     public void interpretCommand() throws DatabaseException{}
 
-    public boolean determinedStructureType(String specifiedType, Database currentDB){
+    public boolean determinedStructureType(String specifiedType, Database currentDB) throws DatabaseException{
         switch (specifiedType){
             case "TABLE":
                 if (currentDB == null){
-                    System.out.println("no database is selected");
-                    return false;
+                    throw new DBObjectDoesNotExistException();
                 }
                 structureType = 1;
                 break;
