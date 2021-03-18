@@ -20,7 +20,7 @@ public class DropCommand extends DropCreateCommand {
         objectToDrop = initDBObject(structureType, followingSQLCommands[1]);
     }
 
-    public void evaluateStructureArgs(int structureType, String[] stringToProcess) throws DatabaseException{
+    public void evaluateStructureArgs(StructureType structureType, String[] stringToProcess) throws DatabaseException{
         super.evaluateStructureArgs(structureType, stringToProcess);
 
         if (stringToProcess.length > 1){

@@ -6,10 +6,10 @@ import DBException.DatabaseException;
 
 import java.util.Arrays;
 
-public class Command extends DBObject {
+public abstract class Command extends DBObject {
     public String SQLCommand;
     String[] followingSQLCommands;
-    protected int structureType;
+    protected StructureType structureType;
     Database workingDatabase;
 
     public Database getWorkingDatabase() {
@@ -36,8 +36,14 @@ public class Command extends DBObject {
                 return new UseCommand(commandString);
             case "DROP":
                 return new DropCommand(commandString);
-
-
+            case "ALTER":
+                return new AlterCommand(commandString);
+            case "INSERT":
+                return new InsertCommand(commandString);
+            case "SELECT":
+            case "UPDATE":
+            case "DELETE":
+            case "JOIN":
             default:
                 return null;
         }
@@ -58,23 +64,16 @@ public class Command extends DBObject {
         return true;
     }
 
-    public void parseCommand() throws DatabaseException {
-        if (!commandHasArguments()){
-            throw new DatabaseException(this, null);
-        }
-    }
-    public void interpretCommand() throws DatabaseException{}
-
     public boolean determinedStructureType(String specifiedType, Database currentDB) throws DatabaseException{
         switch (specifiedType){
             case "TABLE":
                 if (currentDB == null){
                     throw new DBObjectDoesNotExistException();
                 }
-                structureType = 1;
+                structureType = StructureType.TABLE;
                 break;
             case "DATABASE":
-                structureType = 0;
+                structureType = StructureType.DATABASE;
                 break;
             default:
                 System.out.println("Invalid create command parameters.");
@@ -94,11 +93,14 @@ public class Command extends DBObject {
         return true;
     }
 
-    public boolean commandHasArguments(){
-        if (followingSQLCommands.length == 0){
+    public boolean commandHasArguments() {
+        if (followingSQLCommands.length == 0) {
             System.out.println("We should throw an error here because the following commands didn't exist.");
             return false;
         }
         return true;
     }
+
+    public abstract void parseCommand() throws DatabaseException;
+    public abstract void interpretCommand() throws DatabaseException;
 }

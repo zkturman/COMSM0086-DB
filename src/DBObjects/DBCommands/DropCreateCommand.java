@@ -7,6 +7,7 @@ import DBObjects.DBObject;
 import DBObjects.DBTable;
 import DBObjects.Database;
 
+import javax.xml.crypto.Data;
 import java.util.Arrays;
 
 public class DropCreateCommand extends Command {
@@ -17,7 +18,9 @@ public class DropCreateCommand extends Command {
     }
 
     public void parseCommand() throws DatabaseException {
-        super.parseCommand();
+        if (!commandHasArguments()){
+            throw new DatabaseException(this, null);
+        }
         String specifiedStructure = followingSQLCommands[0].toUpperCase();
         if (!determinedStructureType(specifiedStructure, workingDatabase)) {
             throw new InvalidCommandArgumentException();
@@ -26,7 +29,9 @@ public class DropCreateCommand extends Command {
         evaluateStructureArgs(structureType, argumentList);
     }
 
-    public void evaluateStructureArgs(int structureType, String[] stringToProcess) throws DatabaseException {
+    public void interpretCommand() throws DatabaseException{};
+
+    public void evaluateStructureArgs(StructureType type, String[] stringToProcess) throws DatabaseException {
         if (stringToProcess.length == 0) {
             throw new InvalidCommandArgumentException(); //message --> no object name given
         }
@@ -37,11 +42,11 @@ public class DropCreateCommand extends Command {
 
     }
 
-    public DBObject initDBObject(int type, String objectName) throws DatabaseException {
-        if (type == 0){
+    public DBObject initDBObject(StructureType type, String objectName) throws DatabaseException {
+        if (type == StructureType.DATABASE){
             return new Database(objectName);
         }
-        else if (type == 1){
+        else if (type == StructureType.TABLE){
             if (workingDatabase == null){
                 throw new NotUsingDatabaseExeception();
             }

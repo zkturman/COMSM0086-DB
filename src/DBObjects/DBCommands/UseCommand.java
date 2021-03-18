@@ -15,6 +15,9 @@ public class UseCommand extends Command {
     }
 
     public void parseCommand() throws DatabaseException{
+        if (!commandHasArguments()){
+            throw new DatabaseException(this, null);
+        }
         if (followingSQLCommands.length != 1){
             System.out.println("There are an incorrect number of arguments for USE");
             throw new InvalidCommandArgumentException();
