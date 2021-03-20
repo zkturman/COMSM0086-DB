@@ -1,4 +1,4 @@
 package DBException;
 
-public class DBObjectDoesNotExistException extends DatabaseException{
+public class DBObjectDoesNotExistException extends DBException {
 }

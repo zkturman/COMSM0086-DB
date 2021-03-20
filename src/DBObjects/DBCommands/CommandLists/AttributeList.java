@@ -1,15 +1,16 @@
 package DBObjects.DBCommands.CommandLists;
 
-import DBException.DatabaseException;
+import DBException.DBException;
 import DBException.InvalidCommandArgumentException;
+import DBObjects.DBTest;
 import DBObjects.TableAttribute;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AttributeList extends CommandList{
 
+    private String[] attributeNames;
     private List<TableAttribute> attributeList;
 
     public ArrayList<TableAttribute> getAttributeList(){
@@ -21,32 +22,52 @@ public class AttributeList extends CommandList{
         attributeList = new ArrayList<>();
     }
 
-    public boolean parseList() throws DatabaseException {
-        if (listArgs.length == 0){
-            return false; //there are no attributes to process
-        }
-        String attributeStr = String.join("", listArgs);
-        if (attributeStr.charAt(0) != '(' || attributeStr.charAt(attributeStr.length() - 1) != ')'){
-            throw new InvalidCommandArgumentException(); //message --> attribute list does start and end with parentheses
-        }
-
-        //attributes should be delimited with commas only here, so check that all are valid when split on ','
-        attributeStr = attributeStr.substring(1, attributeStr.length() - 1);
-        listArgs = attributeStr.split(",");
+    public boolean parseList() throws DBException {
+        if (isListEmpty(listArgs)){return false;}
+        String attributeStr = stripParentheses(stringifyArray(listArgs));
+        attributeNames = attributeStr.split(",");
+        convertStringToList();
         return true;
-
     }
 
-    public void convertStringToList() throws DatabaseException{
-        for (int i = 0; i < listArgs.length; i++){
-            String attributeName = listArgs[i];
-            if (isNameValid(attributeName)){
-                TableAttribute attributeToAdd = new TableAttribute(attributeName);
+    protected void convertStringToList() throws DBException {
+        for (String i : attributeNames){
+            String attribute = i;
+            if (isNameValid(attribute)){
+                TableAttribute attributeToAdd = new TableAttribute(attribute);
                 attributeList.add(attributeToAdd); //add check to make sure this is actually a table
             }
             else{
                 throw new InvalidCommandArgumentException();
             }
         }
+    }
+
+    public static void test() {
+        String testAttributes1 = "( one, two, three )", testAttributes2 = "(one,two,three)";
+        String testAttributes3 = "( one,two,three )", testAttributes4 = " ";
+        AttributeList attList1 = new AttributeList(testAttributes1.split(" "));
+        AttributeList attList2 = new AttributeList(testAttributes2.split(" "));
+        AttributeList attList3 = new AttributeList(testAttributes3.split(" "));
+        AttributeList attList4 = new AttributeList(testAttributes4.split(" "));
+
+        try{
+            assert !attList1.isListEmpty(attList1.listArgs);
+            assert attList1.stripParentheses(attList1.stringifyArray(attList1.listArgs)).equals("one,two,three");
+            assert attList1.parseList();
+
+            assert !attList2.isListEmpty(attList2.listArgs);
+            assert attList2.stripParentheses(attList2.stringifyArray(attList2.listArgs)).equals("one,two,three");
+            assert attList2.parseList();
+
+            assert !attList3.isListEmpty(attList3.listArgs);
+            assert attList3.stripParentheses(attList3.stringifyArray(attList3.listArgs)).equals("one,two,three");
+            assert attList3.parseList();
+
+            assert attList4.isListEmpty(attList4.listArgs);
+            assert !attList4.parseList();
+        }
+        catch (DBException de){}
+        DBTest.passMessage("AttributeList passed.");
     }
 }

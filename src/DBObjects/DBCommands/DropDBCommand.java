@@ -1,26 +1,23 @@
 package DBObjects.DBCommands;
 
-import DBException.DatabaseException;
+import DBException.DBException;
 import DBException.InvalidCommandArgumentException;
-import DBException.NotUsingDatabaseExeception;
 import DBObjects.*;
 
-import java.util.Arrays;
-
-public class DropCommand extends DropCreateCommand {
+public class DropDBCommand extends DropCreateDBCommand {
     DBObject objectToDrop;
 
-    public DropCommand(String[] dropArgs){
+    public DropDBCommand(String[] dropArgs){
         super(dropArgs);
     }
 
-    public void parseCommand() throws DatabaseException {
-        super.parseCommand();
+    public void prepareCommand() throws DBException {
+        super.prepareCommand();
 
         objectToDrop = initDBObject(structureType, followingSQLCommands[1]);
     }
 
-    public void evaluateStructureArgs(StructureType structureType, String[] stringToProcess) throws DatabaseException{
+    public void evaluateStructureArgs(StructureType structureType, String[] stringToProcess) throws DBException {
         super.evaluateStructureArgs(structureType, stringToProcess);
 
         if (stringToProcess.length > 1){
@@ -28,7 +25,7 @@ public class DropCommand extends DropCreateCommand {
         }
     }
 
-    public void interpretCommand() throws DatabaseException{
+    public void executeCommand() throws DBException {
         objectToDrop.dropObject();
     }
 }

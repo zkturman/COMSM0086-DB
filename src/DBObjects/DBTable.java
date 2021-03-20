@@ -1,12 +1,10 @@
 package DBObjects;
 
 import DBException.DBObjectDoesNotExistException;
-import DBException.DatabaseException;
-import org.w3c.dom.DOMException;
+import DBException.DBException;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.jar.Attributes;
 
 public class DBTable extends DBObject {
     String attributePath;
@@ -95,7 +93,7 @@ public class DBTable extends DBObject {
         }
     }
 
-    public void loadAttributeFile(File attributeFile) throws DatabaseException {
+    public void loadAttributeFile(File attributeFile) throws DBException {
         try {
             FileReader reader = new FileReader((attributePath));
             BufferedReader buffReader = new BufferedReader(reader);
@@ -110,7 +108,7 @@ public class DBTable extends DBObject {
         }
     }
 
-    public void appendAttribute(TableAttribute attributeToAppend) throws DatabaseException {
+    public void appendAttribute(TableAttribute attributeToAppend) throws DBException {
         File attributeFile = new File(attributePath);
         if (!attributeFile.exists()){
             throw new DBObjectDoesNotExistException();
@@ -120,7 +118,7 @@ public class DBTable extends DBObject {
         writeAttributeFile(attributeFile);
     };
 
-    public void removeAttribute(TableAttribute attributeToRemove) throws DatabaseException{
+    public void removeAttribute(TableAttribute attributeToRemove) throws DBException {
         File attributeFile = new File(attributePath);
         if (!attributeFile.exists()){
             throw new DBObjectDoesNotExistException();

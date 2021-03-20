@@ -1,6 +1,6 @@
 package DBObjects;
 
-public class DBObject {
+public abstract class DBObject {
     String objectName;
 
     public String getObjectName() {
@@ -13,10 +13,8 @@ public class DBObject {
     }
     public boolean isNameValid(String objectName) {
         if (objectName.matches(".*[a-zA-Z0-9]")) {
-            System.out.println("the name doesn't contain non-alphanums");
             return true;
         } else {
-            System.out.println("the name contained alphanums");
             return false;
         }
     }

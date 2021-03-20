@@ -1,23 +1,22 @@
 package DBObjects.DBCommands;
 
-import DBException.DatabaseException;
+import DBException.DBException;
 import DBException.InvalidCommandArgumentException;
 import DBObjects.*;
 
 import java.util.Arrays;
-import java.util.Locale;
 
-public class AlterCommand extends Command {
+public class AlterDBCommand extends DBCommand {
     DBTable tableToAlter;
     TableAttribute attributeToAlter;
     AlterType alterType;
-    public AlterCommand(String[] alterArgs){
+    public AlterDBCommand(String[] alterArgs){
         super(alterArgs);
     }
 
-    public void parseCommand() throws DatabaseException{
+    public void prepareCommand() throws DBException {
         if (!commandHasArguments()){
-            throw new DatabaseException(this, null);
+            throw new DBException(this, null);
         }
         String specifiedStructure = followingSQLCommands[0].toUpperCase();
         if (!specifiedStructure.equals("TABLE")){
@@ -27,7 +26,7 @@ public class AlterCommand extends Command {
         evaluateStructureArgs(1, argumentList);
     }
 
-    public void evaluateStructureArgs(int structureType, String[] stringToProcess) throws DatabaseException{
+    public void evaluateStructureArgs(int structureType, String[] stringToProcess) throws DBException {
 
         if (stringToProcess.length == 0) {
             throw new InvalidCommandArgumentException(); //message --> no table name given
@@ -54,7 +53,7 @@ public class AlterCommand extends Command {
         }
         attributeToAlter = new TableAttribute(stringToProcess[0]);
     }
-    public void interpretCommand() throws DatabaseException {
+    public void executeCommand() throws DBException {
         if (alterType == AlterType.ADD){
             tableToAlter.appendAttribute(attributeToAlter);
         }
@@ -62,7 +61,7 @@ public class AlterCommand extends Command {
             tableToAlter.removeAttribute(attributeToAlter);
         }
         else {
-            throw new DatabaseException(); //message --> invalid alter type
+            throw new DBException(); //message --> invalid alter type
         }
     }
 

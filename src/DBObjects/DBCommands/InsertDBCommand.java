@@ -1,6 +1,6 @@
 package DBObjects.DBCommands;
 
-import DBException.DatabaseException;
+import DBException.DBException;
 import DBException.InvalidCommandArgumentException;
 import DBObjects.DBCommands.CommandLists.ValueList;
 import DBObjects.DBTable;
@@ -8,16 +8,16 @@ import DBObjects.DBTable;
 import java.util.Arrays;
 import java.util.Locale;
 
-public class InsertCommand extends Command {
+public class InsertDBCommand extends DBCommand {
 
     DBTable tableToInsert;
     ValueList valuesToInsert;
 
-    public InsertCommand(String[] insertArgs){
+    public InsertDBCommand(String[] insertArgs){
         super(insertArgs);
     }
 
-    public void parseCommand() throws DatabaseException {
+    public void prepareCommand() throws DBException {
         if (!commandHasArguments()){
             throw new InvalidCommandArgumentException();
         }
@@ -29,7 +29,7 @@ public class InsertCommand extends Command {
         evaluateStructureArgs(argumentList);
     }
 
-    public void evaluateStructureArgs(String[] stringToProcess)throws DatabaseException{
+    public void evaluateStructureArgs(String[] stringToProcess)throws DBException {
         if (stringToProcess.length == 0){
             throw new InvalidCommandArgumentException(); //message --> no table name given
         }
@@ -53,14 +53,14 @@ public class InsertCommand extends Command {
         processInsertValues(stringToProcess);
     }
 
-    public void processInsertValues(String[] valueList) throws DatabaseException{
+    public void processInsertValues(String[] valueList) throws DBException {
         valuesToInsert = new ValueList(valueList);
         if (valuesToInsert.parseList()){
             valuesToInsert.convertStringToList();
         }
     }
 
-    public void interpretCommand() throws DatabaseException {
+    public void executeCommand() throws DBException {
         tableToInsert.insertValues();
     }
 }

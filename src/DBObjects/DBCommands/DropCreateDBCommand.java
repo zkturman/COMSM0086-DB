@@ -1,25 +1,24 @@
 package DBObjects.DBCommands;
 
-import DBException.DatabaseException;
+import DBException.DBException;
 import DBException.InvalidCommandArgumentException;
-import DBException.NotUsingDatabaseExeception;
+import DBException.NotUsingDBExeception;
 import DBObjects.DBObject;
 import DBObjects.DBTable;
 import DBObjects.Database;
 
-import javax.xml.crypto.Data;
 import java.util.Arrays;
 
-public class DropCreateCommand extends Command {
+public class DropCreateDBCommand extends DBCommand {
 
 
-    public DropCreateCommand(String[] createArgs) {
+    public DropCreateDBCommand(String[] createArgs) {
         super(createArgs);
     }
 
-    public void parseCommand() throws DatabaseException {
+    public void prepareCommand() throws DBException {
         if (!commandHasArguments()){
-            throw new DatabaseException(this, null);
+            throw new DBException(this, null);
         }
         String specifiedStructure = followingSQLCommands[0].toUpperCase();
         if (!determinedStructureType(specifiedStructure, workingDatabase)) {
@@ -29,9 +28,9 @@ public class DropCreateCommand extends Command {
         evaluateStructureArgs(structureType, argumentList);
     }
 
-    public void interpretCommand() throws DatabaseException{};
+    public void executeCommand() throws DBException {};
 
-    public void evaluateStructureArgs(StructureType type, String[] stringToProcess) throws DatabaseException {
+    public void evaluateStructureArgs(StructureType type, String[] stringToProcess) throws DBException {
         if (stringToProcess.length == 0) {
             throw new InvalidCommandArgumentException(); //message --> no object name given
         }
@@ -42,13 +41,13 @@ public class DropCreateCommand extends Command {
 
     }
 
-    public DBObject initDBObject(StructureType type, String objectName) throws DatabaseException {
+    public DBObject initDBObject(StructureType type, String objectName) throws DBException {
         if (type == StructureType.DATABASE){
             return new Database(objectName);
         }
         else if (type == StructureType.TABLE){
             if (workingDatabase == null){
-                throw new NotUsingDatabaseExeception();
+                throw new NotUsingDBExeception();
             }
             DBTable tableToDrop = new DBTable(objectName);
             tableToDrop.setOwningDatabase(workingDatabase);
@@ -58,5 +57,9 @@ public class DropCreateCommand extends Command {
         else {
             throw new InvalidCommandArgumentException();
         }
+    }
+
+    public String[] splitCommand(String commandString) throws DBException {
+        return new String[0];
     }
 }

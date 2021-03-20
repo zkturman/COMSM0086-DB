@@ -1,9 +1,7 @@
 package DBException;
 
-import DBException.DatabaseException;
-
-public class InvalidCommandArgumentException extends DatabaseException {
-    public InvalidCommandArgumentException(){
-        super();
+public class InvalidCommandArgumentException extends DBException {
+    public InvalidCommandArgumentException(String errorMessage){
+        super(errorMessage);
     }
 }

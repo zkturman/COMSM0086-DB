@@ -7,20 +7,20 @@ import DBObjects.DBCommands.CommandLists.AttributeList;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class CreateCommand extends DropCreateCommand {
+public class CreateDBCommand extends DropCreateDBCommand {
     DBObject objectToCreate;
     ArrayList<TableAttribute> attributesToCreate;
     AttributeList attributesToParse;
 
 
-    public CreateCommand(String [] createArgs){
+    public CreateDBCommand(String [] createArgs){
         super(createArgs);
         attributesToCreate = new ArrayList<>();
     }
 
-    public void parseCommand() throws DatabaseException{
+    public void prepareCommand() throws DBException {
         //make sure create has arguments
-        super.parseCommand();
+        super.prepareCommand();
         objectToCreate = initDBObject(structureType, followingSQLCommands[1]);
         if (objectToCreate instanceof DBTable){
             ((DBTable) objectToCreate).setTableFilePaths ();
@@ -28,7 +28,7 @@ public class CreateCommand extends DropCreateCommand {
         }
     }
 
-    public void evaluateStructureArgs(StructureType type, String[] stringToProcess) throws DatabaseException {
+    public void evaluateStructureArgs(StructureType type, String[] stringToProcess) throws DBException {
         super.evaluateStructureArgs(type, stringToProcess);
 
         //check if this is a database and it contains more than the db name
@@ -42,14 +42,12 @@ public class CreateCommand extends DropCreateCommand {
         }
     }
 
-    public void processCreateAttributes(String[] attributeList) throws DatabaseException{
+    public void processCreateAttributes(String[] attributeList) throws DBException {
         attributesToParse = new AttributeList(attributeList);
-        if (attributesToParse.parseList()) {
-            attributesToParse.convertStringToList();
-        }
+        attributesToParse.parseList();
     }
 
-    public void interpretCommand() throws DatabaseException{
+    public void executeCommand() throws DBException {
         objectToCreate.createObject();
         if (objectToCreate instanceof DBTable){
             ((DBTable) objectToCreate).setTableAttributes(attributesToParse.getAttributeList());

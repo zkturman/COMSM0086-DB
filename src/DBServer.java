@@ -1,3 +1,4 @@
+import DBException.DBException;
 import DBObjects.*;
 
 import java.io.*;
@@ -40,7 +41,12 @@ public class DBServer {
             String incomingCommand = socketReader.readLine();
             System.out.println("Received message: " + incomingCommand);
             DBStatement dbStatement = new DBStatement(workingDatabase);
-            dbStatement.performStatement(incomingCommand);
+            try{
+                dbStatement.performStatement(incomingCommand);
+            }
+            catch(DBException de){
+                socketWriter.write(de.toString());
+            }
             this.workingDatabase = dbStatement.getWorkingDatabase();
             //return string of some sort for errors and success
             socketWriter.write("[OK] Thanks for your message: " + incomingCommand);
