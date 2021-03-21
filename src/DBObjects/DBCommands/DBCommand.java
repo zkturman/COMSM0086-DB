@@ -43,13 +43,14 @@ public abstract class DBCommand extends DBObject {
     }
 
     public static DBCommand generateCommand(String commandName, String[] commandArgs) throws DBException{
+        commandName = commandName.toUpperCase();
         switch (commandName) {
             case "CREATE":
                 return new CreateDBCommand(commandArgs);
             case "USE":
                 return new UseDBCommand(commandArgs);
             case "DROP":
-                return new DropCreateDBCommand(commandArgs);
+                return new DropDBCommand(commandArgs);
             case "ALTER":
                 return new AlterDBCommand(commandArgs);
             case "INSERT":
@@ -70,27 +71,26 @@ public abstract class DBCommand extends DBObject {
         return true;
     }
 
-    public boolean determinedStructureType(String specifiedType, Database currentDB) throws DBException {
+    public void determineStructureType(String specifiedType, Database currentDB) throws DBException {
+        specifiedType = specifiedType.toUpperCase();
         switch (specifiedType){
             case "TABLE":
                 if (currentDB == null){
-                    throw new DBObjectDoesNotExistException();
+                    throw new NotUsingDBException("No working database is selected.");
                 }
                 structureType = StructureType.TABLE;
-                break;
+                return;
             case "DATABASE":
                 structureType = StructureType.DATABASE;
-                break;
+                return;
             default:
-                System.out.println("Invalid create command parameters.");
-                return false;
+                throw new InvalidCommandArgumentException("No valid structure was selected.");
         }
-        return true;
     }
 
     public boolean commandHasArguments(String[] commandAry) throws DBException{
-        if (commandAry.length == 0) {
-            throw new InvalidCommandArgumentException("Command had no arguments.");
+        if (commandAry.length < 1) {
+            throw new InvalidCommandArgumentException("Command has no arguments.");
         }
         return true;
     }
@@ -98,6 +98,8 @@ public abstract class DBCommand extends DBObject {
     public abstract void prepareCommand() throws DBException;
     public abstract void executeCommand() throws DBException;
     public abstract String[] splitCommand(String commandString) throws DBException;
+    public abstract String getNextToken(String[] tokenAry, int index) throws DBException;
+    public abstract String[] removeCommandName(String[] tokenizedCommand);
     public static void test(){
     }
 }

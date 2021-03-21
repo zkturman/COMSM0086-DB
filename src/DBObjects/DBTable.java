@@ -36,6 +36,7 @@ public class DBTable extends DBObject {
 
     public DBTable(String tableName){
         super(tableName);
+        setTableFilePaths();
         tableAttributes = new ArrayList<TableAttribute>();
         tableRows = new ArrayList<TableRow>();
     }

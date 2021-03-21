@@ -12,15 +12,10 @@ public class ValueList extends CommandList{
     private String[] valueContents;
     private List<String> valueList;
 
-    public ValueList(String[] listArgs){
-        this.listArgs = listArgs;
-        valueList = new ArrayList<>();
-    }
-
     public ValueList(String argString) throws DBException {
         String valueString = removeWhiteSpace(argString);
         valueString = stripParentheses(valueString);
-        listArgs = splitValues(valueString);
+        valueContents = splitValues(valueString);
         valueList = new ArrayList<>();
     }
 
@@ -29,29 +24,14 @@ public class ValueList extends CommandList{
     }
 
     public boolean parseList() throws DBException {
-        if (isListEmpty(listArgs)){
+        if (isListEmpty(valueContents)){
             return false;
         }
         convertStringToList();
         return true;
     }
 
-    private String removeWhiteSpace(String valueString){
-        boolean inQuotes = false;
-        String valuesNoSpaces = "";
-        for (int i = 0; i < valueString.length(); i++){
-            if (valueString.charAt(i) == '\''){
-                inQuotes = !inQuotes;
-            }
-            if (!Character.isWhitespace(valueString.charAt(i)) || inQuotes){
-                valuesNoSpaces += valueString.charAt(i);
-            }
-        }
-        System.out.println(valuesNoSpaces);
-        return valuesNoSpaces;
-    }
-
-    private String[] splitValues(String valueString) throws DBException {
+    protected String[] splitValues(String valueString) throws DBException {
         //need the inverse of split on this ((\'.*?\'|[^\',\s]+))
         //here it is ,(?=(?:[^\']*\'[^\']*\')*[^\']*$)
         int startIndex = 0, endIndex = 0, i;
@@ -76,12 +56,11 @@ public class ValueList extends CommandList{
     }
 
     public void convertStringToList() throws DBException {
-        for (int i = 0; i < listArgs.length; i++){
-            if (isValidValue(listArgs[i])){
-                valueList.add(listArgs[i]);
-            }
-            else{
-                throw new InvalidCommandArgumentException("Value " + listArgs[i] + " is not an appropriate type.");
+        for (String valueStr : valueContents) {
+            if (isValidValue(valueStr)) {
+                valueList.add(valueStr);
+            } else {
+                throw new InvalidCommandArgumentException("Value " + valueStr + " is not an appropriate type.");
             }
         }
     }
@@ -96,10 +75,7 @@ public class ValueList extends CommandList{
         if (isFloatLiteral(value)){
             return true;
         }
-        if (isIntegerLiteral(value)){
-            return true;
-        }
-        return false;
+        return isIntegerLiteral(value);
     }
 
     protected boolean isStringLiteral(String value){
@@ -119,10 +95,7 @@ public class ValueList extends CommandList{
         if (value.toUpperCase().equals("TRUE")){
             return true;
         }
-        if (value.toUpperCase().equals("FALSE")){
-            return true;
-        }
-        return false;
+        return value.toUpperCase().equals("FALSE");
     }
 
     protected boolean isFloatLiteral(String value){
@@ -150,6 +123,20 @@ public class ValueList extends CommandList{
         return true;
     }
 
+    protected String removeWhiteSpace(String valueString){
+        boolean inQuotes = false;
+        String valuesNoSpaces = "";
+        for (int i = 0; i < valueString.length(); i++){
+            if (valueString.charAt(i) == '\''){
+                inQuotes = !inQuotes;
+            }
+            if (!Character.isWhitespace(valueString.charAt(i)) || inQuotes){
+                valuesNoSpaces += valueString.charAt(i);
+            }
+        }
+        return valuesNoSpaces;
+    }
+
     public static void test(){
         String test1 = "('abc,  defg', true, 1.2345, 12345 )";
         testValues();
@@ -166,44 +153,48 @@ public class ValueList extends CommandList{
 
     public static void testValues(){
         String test1 = "('abcdefg', true, 1.2345, 12345 )";
-        ValueList test = new ValueList(test1.split(" "));
-        assert test.isStringLiteral("'abcdefg'");
-        assert test.isStringLiteral("'abc123'");
-        assert test.isStringLiteral("'ab12!@'");
-        assert test.isStringLiteral("'ab'");
-        assert test.isStringLiteral("'ab\n\r'");
-        assert !test.isStringLiteral("'ab\n\t'");
-        assert test.isStringLiteral("'ab cd'");
-        assert !test.isBooleanLiteral("abcd");
-        assert !test.isBooleanLiteral("");
-        assert test.isBooleanLiteral("true");
-        assert test.isBooleanLiteral("TRUE");
-        assert test.isBooleanLiteral("False");
-        assert test.isBooleanLiteral("FALSE");
-        assert test.isFloatLiteral("1.5");
-        assert test.isFloatLiteral("1.555555");
-        assert test.isFloatLiteral("-1.5");
-        assert !test.isFloatLiteral("1.a");
-        assert !test.isFloatLiteral("1.");
-        assert !test.isFloatLiteral(".1");
-        assert !test.isFloatLiteral("");
-        assert test.isIntegerLiteral("1");
-        assert test.isIntegerLiteral("1234");
-        assert !test.isIntegerLiteral("asd");
-        assert test.isIntegerLiteral("-1234");
-        assert !test.isIntegerLiteral("");
-        assert !test.isIntegerLiteral("1a");
-        assert !test.isIntegerLiteral("\t");
-        assert test.isValidValue("'abcd'");
-        assert !test.isValidValue("'abcd");
-        assert !test.isValidValue("'abc\t'");
-        assert test.isValidValue("true");
-        assert test.isValidValue("false");
-        assert test.isValidValue("1.234");
-        assert test.isValidValue("-12.34");
-        assert !test.isValidValue("1.aa");
-        assert test.isValidValue("11");
-        assert test.isValidValue("-11");
-        assert !test.isValidValue("1a");
+        try {
+            ValueList test = new ValueList(test1);
+            assert test.isStringLiteral("'abcdefg'");
+            assert test.isStringLiteral("'abc123'");
+            assert test.isStringLiteral("'ab12!@'");
+            assert test.isStringLiteral("'ab'");
+            assert test.isStringLiteral("'ab\n\r'");
+            assert !test.isStringLiteral("'ab\n\t'");
+            assert test.isStringLiteral("'ab cd'");
+            assert !test.isBooleanLiteral("abcd");
+            assert !test.isBooleanLiteral("");
+            assert test.isBooleanLiteral("true");
+            assert test.isBooleanLiteral("TRUE");
+            assert test.isBooleanLiteral("False");
+            assert test.isBooleanLiteral("FALSE");
+            assert test.isFloatLiteral("1.5");
+            assert test.isFloatLiteral("1.555555");
+            assert test.isFloatLiteral("-1.5");
+            assert !test.isFloatLiteral("1.a");
+            assert !test.isFloatLiteral("1.");
+            assert !test.isFloatLiteral(".1");
+            assert !test.isFloatLiteral("");
+            assert test.isIntegerLiteral("1");
+            assert test.isIntegerLiteral("1234");
+            assert !test.isIntegerLiteral("asd");
+            assert test.isIntegerLiteral("-1234");
+            assert !test.isIntegerLiteral("");
+            assert !test.isIntegerLiteral("1a");
+            assert !test.isIntegerLiteral("\t");
+            assert test.isValidValue("'abcd'");
+            assert !test.isValidValue("'abcd");
+            assert !test.isValidValue("'abc\t'");
+            assert test.isValidValue("true");
+            assert test.isValidValue("false");
+            assert test.isValidValue("1.234");
+            assert test.isValidValue("-12.34");
+            assert !test.isValidValue("1.aa");
+            assert test.isValidValue("11");
+            assert test.isValidValue("-11");
+            assert !test.isValidValue("1a");
+        }
+        catch (DBException de){}
+
     }
 }

@@ -5,9 +5,9 @@ import DBException.InvalidCommandArgumentException;
 import DBObjects.DBObject;
 
 public abstract class CommandList extends DBObject {
-    protected String[] listArgs;
     public abstract boolean parseList() throws DBException;
     protected abstract void convertStringToList() throws DBException;
+    protected abstract String[] splitValues(String argString) throws DBException;
     protected boolean isListEmpty(String[] argumentList){
         if (argumentList.length == 0){
             return true;
@@ -25,6 +25,7 @@ public abstract class CommandList extends DBObject {
         argumentStr = argumentStr.substring(1, argumentStr.length() - 1);
         return argumentStr;
     }
+    protected abstract String removeWhiteSpace(String valueString);
     public static void test(){
     };
 }

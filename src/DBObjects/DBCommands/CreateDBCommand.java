@@ -8,50 +8,38 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class CreateDBCommand extends DropCreateDBCommand {
-    DBObject objectToCreate;
-    ArrayList<TableAttribute> attributesToCreate;
     AttributeList attributesToParse;
 
-
-    public CreateDBCommand(String [] createArgs){
+    public CreateDBCommand(String [] createArgs) throws DBException {
         super(createArgs);
-        attributesToCreate = new ArrayList<>();
     }
 
-    public void prepareCommand() throws DBException {
-        //make sure create has arguments
-        super.prepareCommand();
-        objectToCreate = initDBObject(structureType, followingSQLCommands[1]);
-        if (objectToCreate instanceof DBTable){
-            ((DBTable) objectToCreate).setTableFilePaths ();
-            ((DBTable) objectToCreate).setTableAttributes(attributesToCreate); //this seems fishy
-        }
+    @Override
+    public String[] removeCommandName(String[] tokenizedCommand){
+        return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
     }
 
-    public void evaluateStructureArgs(StructureType type, String[] stringToProcess) throws DBException {
-        super.evaluateStructureArgs(type, stringToProcess);
-
-        //check if this is a database and it contains more than the db name
-        if (stringToProcess.length > 2 && type == StructureType.DATABASE){
-            throw new InvalidCommandArgumentException(); //message --> there are too many arguments for a database
+    @Override
+    public void setupListVars(String[] createArgs) throws DBException {
+        if (createArgs.length > 1){
+            listString = createArgs[1];
         }
-
-        if (structureType == StructureType.TABLE){
-            stringToProcess = Arrays.copyOfRange(stringToProcess, 1, stringToProcess.length);
-            processCreateAttributes(stringToProcess);
+        if (createArgs.length > 2){
+            throw new InvalidCommandArgumentException("Create argument did not have the expected structure.");
         }
-    }
-
-    public void processCreateAttributes(String[] attributeList) throws DBException {
-        attributesToParse = new AttributeList(attributeList);
-        attributesToParse.parseList();
     }
 
     public void executeCommand() throws DBException {
-        objectToCreate.createObject();
-        if (objectToCreate instanceof DBTable){
-            ((DBTable) objectToCreate).setTableAttributes(attributesToParse.getAttributeList());
-            ((DBTable) objectToCreate).defineAttributeFile();
+        objectToChange.createObject();
+        if (objectToChange instanceof DBTable){
+            ((DBTable) objectToChange).setTableAttributes(attributesToParse.getAttributeList());
+            ((DBTable) objectToChange).defineAttributeFile();
         }
+    }
+
+    @Override
+    public void prepareList(String listString) throws DBException{
+        attributesToParse = new AttributeList(listString);
+        attributesToParse.parseList();
     }
 }

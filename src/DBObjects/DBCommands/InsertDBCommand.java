@@ -13,54 +13,79 @@ public class InsertDBCommand extends DBCommand {
     DBTable tableToInsert;
     ValueList valuesToInsert;
 
-    public InsertDBCommand(String[] insertArgs){
+    public InsertDBCommand(String[] insertArgs) throws DBException{
         super(insertArgs);
+        if (!commandHasArguments(insertArgs)){
+            throw new InvalidCommandArgumentException("Insert command has no arguments.");
+        }
+        commandString = insertArgs[0];
+        tokenizedCommand = splitCommand(commandString);
+        tokenizedCommand = removeCommandName(tokenizedCommand);
+        if (insertArgs.length == 1){
+            throw new InvalidCommandArgumentException("Insert command expects a list of values.");
+        }
+        listString = insertArgs[1];
+        if (insertArgs.length > 2){
+            throw new InvalidCommandArgumentException("Insert argument did not have the expected structure.");
+        }
     }
 
     public void prepareCommand() throws DBException {
-        if (!commandHasArguments()){
-            throw new InvalidCommandArgumentException();
-        }
-        String intoString = followingSQLCommands[0].toUpperCase(Locale.ROOT);
+        int currentToken = 0;
+        String intoString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
         if (!intoString.equals("INTO")){
-            throw new InvalidCommandArgumentException();
+            throw new InvalidCommandArgumentException("Expected \"INTO\" string in insert command.");
         }
-        String[] argumentList = Arrays.copyOfRange(followingSQLCommands, 1, followingSQLCommands.length);
-        evaluateStructureArgs(argumentList);
+        String tableName = getNextToken(tokenizedCommand, currentToken++);
+        setupTable(tableName);
+        String valuesString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
+        if (!valuesString.equals("VALUES")){
+            throw new InvalidCommandArgumentException("Expected \"VALUES\" string in insert command.");
+        }
+        if (tokenizedCommand.length != currentToken){
+           throw new InvalidCommandArgumentException("Value command did not have the correct structure.");
+        }
+        prepareValueList(listString);
     }
 
-    public void evaluateStructureArgs(String[] stringToProcess)throws DBException {
-        if (stringToProcess.length == 0){
-            throw new InvalidCommandArgumentException(); //message --> no table name given
+    public void setupTable(String tableName)throws DBException {
+        if (tableName.length() == 0) {
+            throw new InvalidCommandArgumentException("No table name provided.");
         }
-        if (!isNameValid(stringToProcess[0])){
-            throw new InvalidCommandArgumentException(); //message --> invalid tablename
+        if (!isNameValid(tableName)) {
+            throw new InvalidCommandArgumentException("Table name was invalid.");
         }
-        tableToInsert = new DBTable(stringToProcess[0]);
+        tableToInsert = new DBTable(tableName);
         tableToInsert.setOwningDatabase(workingDatabase);
         tableToInsert.setTableFilePaths();
-        if (stringToProcess.length <= 1){
-            throw new InvalidCommandArgumentException(); //message --> no VALUES string
-        }
-        stringToProcess = Arrays.copyOfRange(stringToProcess, 1, stringToProcess.length);
-        if (!stringToProcess[0].equals("VALUES")){
-            throw new InvalidCommandArgumentException(); //message --> expected VALUES string
-        }
-        if (stringToProcess.length <= 1){
-            throw new InvalidCommandArgumentException(); //
-        }
-        stringToProcess = Arrays.copyOfRange(stringToProcess, 1, stringToProcess.length);
-        processInsertValues(stringToProcess);
     }
 
-    public void processInsertValues(String[] valueList) throws DBException {
+    public void prepareValueList(String valueList) throws DBException {
         valuesToInsert = new ValueList(valueList);
-        if (valuesToInsert.parseList()){
-            valuesToInsert.convertStringToList();
+        if (!valuesToInsert.parseList()){
+            throw new InvalidCommandArgumentException("Insert expects values to insert.");
         }
     }
 
     public void executeCommand() throws DBException {
         tableToInsert.insertValues();
+    }
+
+    @Override
+    public String[] splitCommand(String commandString) throws DBException {
+        return commandString.split("\\s+");
+    }
+
+    @Override
+    public String getNextToken(String[] tokenAry, int index) throws DBException {
+        if (index > tokenAry.length){
+            throw new InvalidCommandArgumentException("Insert command is incomplete.");
+        }
+        return tokenAry[index];
+    }
+
+    @Override
+    public String[] removeCommandName(String[] tokenizedCommand) {
+        return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
     }
 }

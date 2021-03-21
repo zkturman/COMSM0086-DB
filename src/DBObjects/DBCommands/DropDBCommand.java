@@ -4,28 +4,30 @@ import DBException.DBException;
 import DBException.InvalidCommandArgumentException;
 import DBObjects.*;
 
-public class DropDBCommand extends DropCreateDBCommand {
-    DBObject objectToDrop;
+import java.util.Arrays;
 
-    public DropDBCommand(String[] dropArgs){
+public class DropDBCommand extends DropCreateDBCommand {
+
+    public DropDBCommand(String[] dropArgs) throws DBException{
         super(dropArgs);
     }
 
-    public void prepareCommand() throws DBException {
-        super.prepareCommand();
-
-        objectToDrop = initDBObject(structureType, followingSQLCommands[1]);
+    @Override
+    public String[] removeCommandName(String[] tokenizedCommand) {
+        return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
     }
 
-    public void evaluateStructureArgs(StructureType structureType, String[] stringToProcess) throws DBException {
-        super.evaluateStructureArgs(structureType, stringToProcess);
-
-        if (stringToProcess.length > 1){
-            throw new InvalidCommandArgumentException(); //message --> too many arguments given
+    @Override
+    public void setupListVars(String[] commandArgs) throws DBException {
+        if (commandArgs.length > 1){
+            throw new InvalidCommandArgumentException("Drop command has unexpected arguments.");
         }
     }
 
     public void executeCommand() throws DBException {
-        objectToDrop.dropObject();
+        objectToChange.dropObject();
     }
+
+    @Override
+    public void prepareList(String listString) {}
 }

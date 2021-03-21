@@ -5,6 +5,8 @@ import DBException.DBException;
 import DBException.InvalidCommandArgumentException;
 import DBObjects.Database;
 
+import java.util.Arrays;
+
 public class UseDBCommand extends DBCommand {
     Database databaseToUse;
 
@@ -14,10 +16,11 @@ public class UseDBCommand extends DBCommand {
         }
         commandString = commandArgs[0];
         tokenizedCommand = splitCommand(commandString);
+        tokenizedCommand = removeCommandName(tokenizedCommand);
     }
 
     public void prepareCommand() throws DBException {
-        String databaseName = tokenizedCommand[0];
+        String databaseName = getNextToken(tokenizedCommand, 0);
         if (!isNameValid(databaseName)){
             throw new InvalidCommandArgumentException("Database did not have a valid name.");
         }
@@ -33,6 +36,19 @@ public class UseDBCommand extends DBCommand {
 
     public String[] splitCommand(String commandString){
         return commandString.split("\\s+");
+    }
+
+    @Override
+    public String getNextToken(String[] tokenAry, int index) throws DBException {
+        if (index > tokenAry.length){
+            throw new InvalidCommandArgumentException("Command did not have the correct number of arguments.");
+        }
+        return tokenAry[index];
+    }
+
+    @Override
+    public String[] removeCommandName(String[] tokenizedCommand) {
+        return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
     }
 
     public static void test(){

@@ -12,18 +12,12 @@ public abstract class DBObject {
         this.objectName = objectName;
     }
     public boolean isNameValid(String objectName) {
-        if (objectName.matches(".*[a-zA-Z0-9]")) {
-            return true;
-        } else {
-            return false;
-        }
+        return objectName.matches(".+[a-zA-Z0-9]");
     }
-
     public void createObject(){
         System.out.println("we're trying to create the parent DBObject");
     }
     public void dropObject() { System.out.println("we're trying to drop the parent DBObject");}
-
     public boolean dbObjectExists(){
         return false;
     }

@@ -1,44 +1,37 @@
 package DBObjects.DBCommands;
 
-import DBException.DBException;
-import DBException.InvalidCommandArgumentException;
-import DBException.NotUsingDBExeception;
+import DBException.*;
 import DBObjects.DBObject;
 import DBObjects.DBTable;
 import DBObjects.Database;
 
-import java.util.Arrays;
+public abstract class DropCreateDBCommand extends DBCommand {
+    DBObject objectToChange;
 
-public class DropCreateDBCommand extends DBCommand {
 
-
-    public DropCreateDBCommand(String[] createArgs) {
-        super(createArgs);
+    protected DropCreateDBCommand(String[] dropCreateArgs) throws DBException{
+        if (!commandHasArguments(dropCreateArgs)){
+            throw new DBException("Create or Drop command has no arguments.");
+        }
+        commandString = dropCreateArgs[0];
+        tokenizedCommand = splitCommand(commandString);
+        tokenizedCommand = removeCommandName(tokenizedCommand);
+        setupListVars(dropCreateArgs);
     }
 
     public void prepareCommand() throws DBException {
-        if (!commandHasArguments()){
-            throw new DBException(this, null);
+        int currentToken = 0;
+        String specifiedStructure = getNextToken(tokenizedCommand, currentToken++);
+        determineStructureType(specifiedStructure, workingDatabase);
+        //evaluateStructureArgs(structureType);
+        String structureName = getNextToken(tokenizedCommand, currentToken++);
+        if (!isNameValid(structureName)){
+            throw new DBInvalidObjectName("Invalid object name provided in command.");
         }
-        String specifiedStructure = followingSQLCommands[0].toUpperCase();
-        if (!determinedStructureType(specifiedStructure, workingDatabase)) {
-            throw new InvalidCommandArgumentException();
+        objectToChange = initDBObject(structureType, structureName);
+        if (listString != null){
+            prepareList(listString);
         }
-        String[] argumentList = Arrays.copyOfRange(followingSQLCommands, 1, followingSQLCommands.length);
-        evaluateStructureArgs(structureType, argumentList);
-    }
-
-    public void executeCommand() throws DBException {};
-
-    public void evaluateStructureArgs(StructureType type, String[] stringToProcess) throws DBException {
-        if (stringToProcess.length == 0) {
-            throw new InvalidCommandArgumentException(); //message --> no object name given
-        }
-
-        if (!isNameValid(stringToProcess[0])) {
-            throw new InvalidCommandArgumentException(); //message --> name contains special chars
-        }
-
     }
 
     public DBObject initDBObject(StructureType type, String objectName) throws DBException {
@@ -47,19 +40,34 @@ public class DropCreateDBCommand extends DBCommand {
         }
         else if (type == StructureType.TABLE){
             if (workingDatabase == null){
-                throw new NotUsingDBExeception();
+                throw new NotUsingDBException("No working database has been selected.");
             }
-            DBTable tableToDrop = new DBTable(objectName);
-            tableToDrop.setOwningDatabase(workingDatabase);
-            tableToDrop.setTableFilePaths();
-            return tableToDrop;
+            DBTable tableToChange = new DBTable(objectName);
+            tableToChange.setOwningDatabase(workingDatabase);
+            tableToChange.setTableFilePaths();
+            return tableToChange;
         }
         else {
-            throw new InvalidCommandArgumentException();
+            throw new InvalidCommandArgumentException("No appropriate structure type is specified.");
         }
     }
 
+    //can probably move this to command
     public String[] splitCommand(String commandString) throws DBException {
-        return new String[0];
+        return commandString.split("\\s+");
     }
+
+    public String getNextToken(String[] tokenAry, int index) throws DBException{
+        if (index > tokenAry.length - 1){
+            throw new InvalidCommandArgumentException("Command expected more arguments.");
+        }
+        return tokenAry[index];
+    }
+
+    public abstract String[] removeCommandName(String[] tokenizedCommand);
+    public abstract void setupListVars(String[] commandArgs) throws DBException;
+    public abstract void executeCommand() throws DBException;
+    //public abstract void evaluateStructureArgs(StructureType type) throws DBException;
+    public abstract void prepareList(String listString) throws DBException;
+
 }

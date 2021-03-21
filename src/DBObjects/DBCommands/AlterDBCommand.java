@@ -1,7 +1,6 @@
 package DBObjects.DBCommands;
 
-import DBException.DBException;
-import DBException.InvalidCommandArgumentException;
+import DBException.*;
 import DBObjects.*;
 
 import java.util.Arrays;
@@ -10,49 +9,54 @@ public class AlterDBCommand extends DBCommand {
     DBTable tableToAlter;
     TableAttribute attributeToAlter;
     AlterType alterType;
-    public AlterDBCommand(String[] alterArgs){
+    public AlterDBCommand(String[] alterArgs) throws DBException{
         super(alterArgs);
+        if (!commandHasArguments(alterArgs)){
+            throw new InvalidCommandArgumentException("Alter command has no arguments");
+        }
+        commandString = alterArgs[0];
+        tokenizedCommand = splitCommand(commandString);
+        tokenizedCommand = removeCommandName(tokenizedCommand);
+        if (alterArgs.length > 1) {
+            throw new InvalidCommandArgumentException("Alter command has unexpected structure.");
+        }
     }
 
     public void prepareCommand() throws DBException {
-        if (!commandHasArguments()){
-            throw new DBException(this, null);
+        int currentToken = 0;
+        String tableString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
+        if (!tableString.equals("TABLE")){
+            throw new InvalidCommandArgumentException("Expected \"TABLE\" string in alter command.");
         }
-        String specifiedStructure = followingSQLCommands[0].toUpperCase();
-        if (!specifiedStructure.equals("TABLE")){
-            throw new InvalidCommandArgumentException();
+        String tableName = getNextToken(tokenizedCommand, currentToken++);
+        setupTable(tableName);
+        String alterationType = getNextToken(tokenizedCommand, currentToken++);
+        if (!convertStringToAlterType(alterationType)){
+            throw new InvalidCommandArgumentException("Invalid alteration type provided.");
         }
-        String[] argumentList = Arrays.copyOfRange(followingSQLCommands, 1, followingSQLCommands.length);
-        evaluateStructureArgs(1, argumentList);
+        String attributeName = getNextToken(tokenizedCommand, currentToken++);
+        setupAttribute(attributeName);
     }
 
-    public void evaluateStructureArgs(int structureType, String[] stringToProcess) throws DBException {
+    private void setupAttribute(String attributeName) throws DBException {
+        if (!isNameValid(attributeName)){
+            throw new InvalidCommandArgumentException("Attribute name is invalid.");
+        }
+        attributeToAlter = new TableAttribute(attributeName);
+    }
 
-        if (stringToProcess.length == 0) {
-            throw new InvalidCommandArgumentException(); //message --> no table name given
+    public void setupTable(String tableName) throws DBException {
+        if (tableName.length() == 0) {
+            throw new InvalidCommandArgumentException("No table name given.");
         }
-        if (!isNameValid(stringToProcess[0])) {
-            throw new InvalidCommandArgumentException(); //message --> table name contains special chars
+        if (!isNameValid(tableName)) {
+            throw new InvalidCommandArgumentException("Table name contains special characters.");
         }
-        tableToAlter = new DBTable(stringToProcess[0]);
+        tableToAlter = new DBTable(tableName);
         tableToAlter.setOwningDatabase(workingDatabase);
         tableToAlter.setTableFilePaths();
-        if (stringToProcess.length <= 1){
-            throw new InvalidCommandArgumentException(); //message --> no alteration type
-        }
-        stringToProcess = Arrays.copyOfRange(stringToProcess, 1, stringToProcess.length);
-        if (!convertStringToAlterType(stringToProcess[0])){
-            throw new InvalidCommandArgumentException(); //message --> alteration type is incorrect
-        }
-        if (stringToProcess.length <= 1){
-            throw new InvalidCommandArgumentException(); //message --> no attribute name was given
-        }
-        stringToProcess = Arrays.copyOfRange(stringToProcess, 1, stringToProcess.length);
-        if (!isNameValid(stringToProcess[0])){
-            throw new InvalidCommandArgumentException(); //message --> attribute name was invalid
-        }
-        attributeToAlter = new TableAttribute(stringToProcess[0]);
     }
+
     public void executeCommand() throws DBException {
         if (alterType == AlterType.ADD){
             tableToAlter.appendAttribute(attributeToAlter);
@@ -61,11 +65,29 @@ public class AlterDBCommand extends DBCommand {
             tableToAlter.removeAttribute(attributeToAlter);
         }
         else {
-            throw new DBException(); //message --> invalid alter type
+            throw new DBInvalidAlterType("Invalid alteration type was provided.");
         }
     }
 
-    public boolean convertStringToAlterType(String alterString){
+    @Override
+    public String[] splitCommand(String commandString) throws DBException {
+        return commandString.split("\\s+");
+    }
+
+    @Override
+    public String getNextToken(String[] tokenAry, int index) throws DBException {
+        if (index > tokenAry.length){
+            throw new InvalidCommandArgumentException("Alter command was incomplete.");
+        }
+        return tokenAry[index];
+    }
+
+    @Override
+    public String[] removeCommandName(String[] tokenizedCommand) {
+        return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
+    }
+
+    private boolean convertStringToAlterType(String alterString){
         switch(alterString.toUpperCase()){
             case "ADD":
                 alterType = AlterType.ADD;

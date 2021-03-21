@@ -32,7 +32,7 @@ public class DBStatement {
     }
 
     private String getFirstToken(String mainCommand){
-        return mainCommand.split("(\\s+|\\*)")[0];
+        return mainCommand.split("(\\s+|\\s*\\*)")[0];
     }
 
     private String removeSemicolon(String statement) throws DBException {

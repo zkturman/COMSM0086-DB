@@ -129,4 +129,14 @@ public class CommandCondition extends CommandList{
     public boolean parseList(){return true;}
 
     public void convertStringToList() throws DBException {}
+
+    @Override
+    protected String[] splitValues(String argString) throws DBException {
+        return new String[0];
+    }
+
+    @Override
+    protected String removeWhiteSpace(String valueString) {
+        return null;
+    }
 }
