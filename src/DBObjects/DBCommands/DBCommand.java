@@ -9,7 +9,6 @@ public abstract class DBCommand extends DBObject {
     public String commandString;
     public String[] tokenizedCommand;
     public String listString;
-    public String[] tokenizedList;
     protected StructureType structureType;
     Database workingDatabase;
 
@@ -22,6 +21,7 @@ public abstract class DBCommand extends DBObject {
     }
 
     protected  DBCommand(){}
+
     public DBCommand(String[] commandArray) throws DBException{}
 
     public static boolean isValidCommand(String commandName){

@@ -52,9 +52,10 @@ public class AlterDBCommand extends DBCommand {
         if (!isNameValid(tableName)) {
             throw new InvalidCommandArgumentException("Table name contains special characters.");
         }
-        tableToAlter = new DBTable(tableName);
-        tableToAlter.setOwningDatabase(workingDatabase);
-        tableToAlter.setTableFilePaths();
+        if (workingDatabase == null){
+            throw new NotUsingDBException("No working database has been selected.");
+        }
+        tableToAlter = new DBTable(tableName, workingDatabase);
     }
 
     public void executeCommand() throws DBException {

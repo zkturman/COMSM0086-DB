@@ -4,7 +4,6 @@ import DBObjects.*;
 import DBException.*;
 import DBObjects.DBCommands.CommandLists.AttributeList;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class CreateDBCommand extends DropCreateDBCommand {
@@ -32,8 +31,9 @@ public class CreateDBCommand extends DropCreateDBCommand {
     public void executeCommand() throws DBException {
         objectToChange.createObject();
         if (objectToChange instanceof DBTable){
-            ((DBTable) objectToChange).setTableAttributes(attributesToParse.getAttributeList());
-            ((DBTable) objectToChange).defineAttributeFile();
+            if (attributesToParse != null){
+                ((DBTable) objectToChange).setTableAttributes(attributesToParse.getAttributeList());
+            }
         }
     }
 

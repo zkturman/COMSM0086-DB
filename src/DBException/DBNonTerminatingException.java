@@ -1,7 +1,7 @@
 package DBException;
 
 public class DBNonTerminatingException extends DBException {
-    public DBNonTerminatingException(){
-
+    public DBNonTerminatingException(String errorMessage){
+        super(errorMessage);
     }
 }

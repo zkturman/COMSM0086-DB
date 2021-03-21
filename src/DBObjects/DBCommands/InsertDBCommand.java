@@ -1,7 +1,6 @@
 package DBObjects.DBCommands;
 
-import DBException.DBException;
-import DBException.InvalidCommandArgumentException;
+import DBException.*;
 import DBObjects.DBCommands.CommandLists.ValueList;
 import DBObjects.DBTable;
 
@@ -55,9 +54,10 @@ public class InsertDBCommand extends DBCommand {
         if (!isNameValid(tableName)) {
             throw new InvalidCommandArgumentException("Table name was invalid.");
         }
-        tableToInsert = new DBTable(tableName);
-        tableToInsert.setOwningDatabase(workingDatabase);
-        tableToInsert.setTableFilePaths();
+        if (workingDatabase == null){
+            throw new NotUsingDBException("No working database has been selected.");
+        }
+        tableToInsert = new DBTable(tableName, workingDatabase);
     }
 
     public void prepareValueList(String valueList) throws DBException {
@@ -68,7 +68,7 @@ public class InsertDBCommand extends DBCommand {
     }
 
     public void executeCommand() throws DBException {
-        tableToInsert.insertValues();
+        tableToInsert.insertRow(valuesToInsert.getValueList());
     }
 
     @Override

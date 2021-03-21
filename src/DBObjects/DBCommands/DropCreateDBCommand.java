@@ -42,9 +42,7 @@ public abstract class DropCreateDBCommand extends DBCommand {
             if (workingDatabase == null){
                 throw new NotUsingDBException("No working database has been selected.");
             }
-            DBTable tableToChange = new DBTable(objectName);
-            tableToChange.setOwningDatabase(workingDatabase);
-            tableToChange.setTableFilePaths();
+            DBTable tableToChange = new DBTable(objectName, workingDatabase);
             return tableToChange;
         }
         else {
@@ -67,7 +65,6 @@ public abstract class DropCreateDBCommand extends DBCommand {
     public abstract String[] removeCommandName(String[] tokenizedCommand);
     public abstract void setupListVars(String[] commandArgs) throws DBException;
     public abstract void executeCommand() throws DBException;
-    //public abstract void evaluateStructureArgs(StructureType type) throws DBException;
     public abstract void prepareList(String listString) throws DBException;
 
 }

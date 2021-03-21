@@ -37,7 +37,7 @@ public class DBStatement {
 
     private String removeSemicolon(String statement) throws DBException {
         if (statement.charAt(statement.length() - 1) != ';'){
-            throw new DBNonTerminatingException();
+            throw new DBNonTerminatingException("String did not end with a semicolon.");
         }
         return statement.substring(0, statement.length() - 1);
     }

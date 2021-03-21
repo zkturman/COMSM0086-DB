@@ -3,6 +3,7 @@ package DBObjects.DBCommands.CommandLists;
 import DBException.DBException;
 import DBException.InvalidCommandArgumentException;
 import DBObjects.DBTest;
+import DBObjects.TableRow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,17 +11,16 @@ import java.util.List;
 public class ValueList extends CommandList{
 
     private String[] valueContents;
-    private List<String> valueList;
+    private TableRow valueList;
 
     public ValueList(String argString) throws DBException {
         String valueString = removeWhiteSpace(argString);
         valueString = stripParentheses(valueString);
         valueContents = splitValues(valueString);
-        valueList = new ArrayList<>();
     }
 
-    public ArrayList<String> getValueList(){
-        return (ArrayList<String>) valueList;
+    public TableRow getValueList(){
+        return valueList;
     }
 
     public boolean parseList() throws DBException {
@@ -57,12 +57,11 @@ public class ValueList extends CommandList{
 
     public void convertStringToList() throws DBException {
         for (String valueStr : valueContents) {
-            if (isValidValue(valueStr)) {
-                valueList.add(valueStr);
-            } else {
+            if (!isValidValue(valueStr)) {
                 throw new InvalidCommandArgumentException("Value " + valueStr + " is not an appropriate type.");
             }
         }
+        valueList = new TableRow(valueContents);
     }
 
     protected boolean isValidValue(String value){
