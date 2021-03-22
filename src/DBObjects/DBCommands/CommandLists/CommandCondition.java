@@ -2,94 +2,88 @@ package DBObjects.DBCommands.CommandLists;
 
 import DBException.DBException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Stack;
 
 public class CommandCondition extends CommandList{
 
     String conditionString;
 
-    public boolean findCondition(String conditions, int startIndex, int endIndex){
-        int openCount = 0, closeCount = 0;
-        int openIndex = 0, closeIndex = 0;
-        if (conditions.charAt(0) != '('){
-            return false;
-        }
-        for (int i = 0; i < conditions.length(); i++){
-            if (conditions.charAt(i) == '('){
-                if (openCount == 0){
-                    openIndex = i;
-                }
-                openCount ++;
-            }
-            if (conditions.charAt(i) == ')'){
-                closeCount++;
-                if (openCount == closeCount){
-                    closeIndex = i;
-                    closeCount = 0;
-                    openCount = 0;
-                    if (!findCondition(conditions, openIndex + 1, closeIndex)){
-                        return false;
-                    }
-                }
-            }
-        }
-        if (openCount != closeCount){
-            return false;
-        }
-        return true;
+    public CommandCondition(String conditionString){
+        this.conditionString = removeWhiteSpace(conditionString);
     }
 
-    public void stackifyCondition(){
-        Stack<String> parenStack;
-        Stack<String> finalStack;
-        Stack<String> operatorStack;
+    public Stack<String> stackifyCondition(String conditionString){
+        Stack<String> parenStack = new Stack<>();
+        Stack<String> finalStack = new Stack<>();
+        Stack<String> operatorStack = new Stack<>();
 
         for (int i = 0; i < conditionString.length(); i++){
             if (isOperator(conditionString, i) > 0){
-
+                operatorStack.push(conditionString.substring(i, isOperator(conditionString, i)));
             }
             if (isBoolean(conditionString, i) > 0){
-
+                operatorStack.push(conditionString.substring(i, isBoolean(conditionString, i)));
             }
             if (isName(conditionString, i) > 0){
-
+                finalStack.push(conditionString.substring(i, isName(conditionString, i)));
+            }
+            if (conditionString.charAt(i) == '('){
+                parenStack.push(conditionString.substring(i, i + 1));
+            }
+            if (conditionString.charAt(i) == ')'){
+                if (operatorStack.peek() != null){
+                    finalStack.push(operatorStack.pop());
+                }
             }
         }
+        invertStack(finalStack);
+        return finalStack;
+    }
+
+    public Stack<String> invertStack(Stack<String> oldStack){
+        Stack<String> invertedStack = new Stack<>();
+        while (!oldStack.isEmpty()){
+            invertedStack.push(oldStack.pop());
+        }
+        return invertedStack;
     }
 
     public int isOperator(String conditionString, int operatorIndex){
+        int conditionSize = conditionString.length();
         if (conditionString.charAt(operatorIndex) == '>'){
-            return 1;
+            return conditionSize;
         }
         if (conditionString.charAt(operatorIndex) == '<'){
-                return 1;
+            return conditionSize;
         }
         String twoDigitOp = conditionString.substring(operatorIndex, operatorIndex + 2);
         if (twoDigitOp.equals("==")){
-            return 2;
+            return conditionSize;
         }
         if (twoDigitOp.equals("!=")) {
-            return 2;
+            return conditionSize;
         }
         if (twoDigitOp.equals(">=")){
-            return 2;
+            return conditionSize;
         }
         if (twoDigitOp.equals("<=")){
-            return 2;
+            return conditionSize;
         }
         if (conditionString.substring(operatorIndex, operatorIndex + 4).equals("LIKE")){
-            return 4;
+            return conditionSize;
         }
 
         return -1;
     }
 
     public int isBoolean(String conditionString, int operatorIndex){
+        int conditionSize = conditionString.length();
         if (isAnd()){
-            return 3;
+            return conditionSize;
         }
         if (isOr()){
-            return 2;
+            return conditionSize;
         }
         return -1;
     }

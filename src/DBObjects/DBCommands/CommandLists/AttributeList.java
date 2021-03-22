@@ -11,13 +11,14 @@ import java.util.List;
 
 public class AttributeList extends CommandList{
 
-    private String[] attributeNames;
-    private List<TableAttribute> attributeList;
+    protected String[] attributeNames;
+    protected List<TableAttribute> attributeList;
 
     public ArrayList<TableAttribute> getAttributeList(){
         return (ArrayList<TableAttribute>) attributeList;
     }
 
+    protected AttributeList(){}
     public AttributeList(String argString) throws DBException{
         String attributeString = removeWhiteSpace(argString);
         attributeString = stripParentheses(attributeString);

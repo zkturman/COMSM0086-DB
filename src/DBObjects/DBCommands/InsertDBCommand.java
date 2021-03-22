@@ -42,7 +42,7 @@ public class InsertDBCommand extends DBCommand {
             throw new InvalidCommandArgumentException("Expected \"VALUES\" string in insert command.");
         }
         if (tokenizedCommand.length != currentToken){
-           throw new InvalidCommandArgumentException("Value command did not have the correct structure.");
+           throw new InvalidCommandArgumentException("Insert command did not have the correct structure.");
         }
         prepareValueList(listString);
     }
