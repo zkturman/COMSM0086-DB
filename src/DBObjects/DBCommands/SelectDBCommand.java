@@ -27,6 +27,7 @@ public class SelectDBCommand extends DBCommand{
             throw new InvalidCommandArgumentException("Select command has the incorrect form.");
         }
         commandString = selectArgs[0];
+        //finds and removes the WildAttributeList
         tokenizedCommand = splitCommand(commandString);
         tokenizedCommand = removeCommandName(tokenizedCommand);
         if (selectArgs.length == 2){
@@ -76,10 +77,6 @@ public class SelectDBCommand extends DBCommand{
         tableToRead.loadTableFile();
     }
 
-    public void setupSingleExpression() throws DBException {
-
-    }
-
     public boolean shouldCheckConditions(){
         return listString != null;
     }
@@ -103,7 +100,8 @@ public class SelectDBCommand extends DBCommand{
     @Override
     public String[] splitCommand(String commandString) throws DBException {
         //get attribute list:
-        Pattern attributePattern = Pattern.compile("(?<=select).*(?=from)");
+        //((?<=select)\*(?=from\s+)|(?<=select)\s+.*\s+(?=from\s+))
+        Pattern attributePattern = Pattern.compile("(?<=select).*(?=from\\s+)", Pattern.CASE_INSENSITIVE);
         Matcher attributeMatcher = attributePattern.matcher(commandString);
         attributeMatcher.find();
         attributeString = attributeMatcher.group();

@@ -72,7 +72,7 @@ public class CommandCondition extends CommandList{
             finalStack.push(operatorStack.pop());
         }
         if (!parenStack.isEmpty()){
-            throw new DBCommandFormException("Command was not of the correct form. Try parentheses.");
+            throw new DBConditionFormException("Command was not of the correct form. Try parentheses.");
         }
         return finalStack;
     }
@@ -140,11 +140,11 @@ public class CommandCondition extends CommandList{
             if (isSymbol(conditions.peek())){
                 operator = conditions.pop();
                 if (valueStack.isEmpty()){
-                    throw new DBCommandFormException("Conditions were not of the correct form.");
+                    throw new DBConditionFormException("Conditions were not of the correct form.");
                 }
                 value1 = valueStack.pop();
                 if (valueStack.isEmpty()){
-                    throw new DBCommandFormException("Conditions were not of the correct form.");
+                    throw new DBConditionFormException("Conditions were not of the correct form.");
                 }
                 value2 = valueStack.pop();
                 //values reversed after popping off stack
@@ -160,11 +160,11 @@ public class CommandCondition extends CommandList{
 
     public boolean getConditionResult(Stack<String> resultStack) throws DBException {
         if (resultStack.isEmpty()){
-            throw new DBCommandFormException("Conditions were not of the correct form.");
+            throw new DBConditionFormException("Conditions were not of the correct form.");
         }
         String finalValue = resultStack.pop();
         if (!resultStack.isEmpty()){
-            throw new DBCommandFormException("Conditions were not of the correct form.");
+            throw new DBConditionFormException("Conditions were not of the correct form.");
         }
         if (finalValue.equals("1")){
             return true;
@@ -173,7 +173,7 @@ public class CommandCondition extends CommandList{
             return false;
         }
         else{
-            throw new DBCommandFormException("Conditions were not of the correct form.");
+            throw new DBConditionFormException("Conditions were not of the correct form.");
         }
     }
 
