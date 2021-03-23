@@ -28,7 +28,7 @@ public class UseDBCommand extends DBCommand {
     }
     public void executeCommand() throws DBException {
         if (!databaseToUse.dbObjectExists()){
-            throw new DBObjectDoesNotExistException();
+            throw new DBObjectDoesNotExistException("Could not find database.");
         }
         //databaseToUse.loadTables
         workingDatabase = databaseToUse;

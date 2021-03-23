@@ -15,7 +15,7 @@ public class SelectDBCommand extends DBCommand{
 
     String attributeString;
     DBTable tableToRead;
-    AttributeList selectAttributes;
+    WildAttributeList selectAttributes;
     CommandCondition selectConditions;
 
     public SelectDBCommand(String[] selectArgs) throws DBException{
@@ -52,12 +52,13 @@ public class SelectDBCommand extends DBCommand{
             prepareConditions();
         }
         if (tokenizedCommand.length != currentToken){
-            throw new InvalidCommandArgumentException("Select command did not have the correct structure.");
+            listString = commandString.split("\\s+where\\s+")[1];
+            prepareConditions();
         }
     }
 
     public void prepareAttributes() throws DBException {
-        selectAttributes = new WildAttributeList(listString);
+        selectAttributes = new WildAttributeList(attributeString);
         selectAttributes.parseList();
     }
 
@@ -72,19 +73,31 @@ public class SelectDBCommand extends DBCommand{
             throw new NotUsingDBException("No working database has been selected.");
         }
         tableToRead = new DBTable(tableName, workingDatabase);
+        tableToRead.loadTableFile();
+    }
+
+    public void setupSingleExpression() throws DBException {
+
     }
 
     public boolean shouldCheckConditions(){
-        return true;
+        return listString != null;
     }
 
     public void prepareConditions() throws DBException {
-
+        selectConditions = new CommandCondition(listString);
+        selectConditions.parseList();
     }
 
     @Override
     public void executeCommand() throws DBException {
-
+        if (selectConditions != null){
+            selectConditions.executeConditions(tableToRead);
+        }
+        if (selectAttributes.getAllAttributes()){
+            tableToRead.printTable();
+        }
+        tableToRead.printTable(selectAttributes.getAttributeList());
     }
 
     @Override

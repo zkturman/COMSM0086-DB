@@ -64,64 +64,6 @@ public class ValueList extends CommandList{
         valueList = new TableRow(valueContents);
     }
 
-    protected boolean isValidValue(String value){
-        if (isStringLiteral(value)){
-            return true;
-        }
-        if (isBooleanLiteral(value)){
-            return true;
-        }
-        if (isFloatLiteral(value)){
-            return true;
-        }
-        return isIntegerLiteral(value);
-    }
-
-    protected boolean isStringLiteral(String value){
-        if (value.charAt(0) != '\'' || value.charAt(value.length() - 1) != '\''){
-            return false;
-        }
-        value = value.substring(1, value.length() - 1);
-        for (int i = 0; i < value.length(); i++){
-            if (value.charAt(i) == '\'' || value.charAt(i) == '\t'){
-                return false;
-            }
-        }
-        return true;
-    }
-
-    protected boolean isBooleanLiteral(String value){
-        if (value.toUpperCase().equals("TRUE")){
-            return true;
-        }
-        return value.toUpperCase().equals("FALSE");
-    }
-
-    protected boolean isFloatLiteral(String value){
-        String[] floatAry = value.split("\\.");
-        if (floatAry.length != 2){
-            return false;
-        }
-        try{
-            Integer.parseInt(floatAry[0]);
-            Integer.parseInt(floatAry[1]);
-        }
-        catch (NumberFormatException nfe){
-            return false;
-        }
-        return true;
-    }
-
-    protected boolean isIntegerLiteral(String value){
-        try{
-            Integer.parseInt(value);
-        }
-        catch (NumberFormatException nfe){
-            return false;
-        }
-        return true;
-    }
-
     protected String removeWhiteSpace(String valueString){
         boolean inQuotes = false;
         String valuesNoSpaces = "";

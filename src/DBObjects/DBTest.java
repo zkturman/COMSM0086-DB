@@ -1,9 +1,6 @@
 package DBObjects;
 
-import DBObjects.DBCommands.CommandLists.AttributeList;
-import DBObjects.DBCommands.CommandLists.CommandCondition;
-import DBObjects.DBCommands.CommandLists.ValueList;
-import DBObjects.DBCommands.CommandLists.WildAttributeList;
+import DBObjects.DBCommands.CommandLists.*;
 import DBObjects.DBCommands.SelectDBCommand;
 import DBObjects.DBObject;
 
@@ -16,6 +13,7 @@ public class DBTest extends DBObject {
         SelectDBCommand.test();
         WildAttributeList.test();
         CommandCondition.test();
+        DBExpression.test();
     }
     public static void passMessage(String completeMessage){
         System.out.println(completeMessage);

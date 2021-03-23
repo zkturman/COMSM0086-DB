@@ -57,6 +57,33 @@ public class DBTable extends DBObject {
         loadAttributeFile();
         return tableAttributes.size();
     }
+
+    public int getAttributeIndex(String attributeName) throws DBException{
+        for (int i = 0; i < tableAttributes.size(); i++){
+            if (tableAttributes.get(i).getObjectName().equals(attributeName)){
+                return i;
+            }
+        }
+        throw new DBObjectDoesNotExistException("Could not find attribute in table.");
+    }
+
+    public String getAttributeValue(String attributeName) throws DBException{
+        int index = getAttributeIndex(attributeName);
+        return tableAttributes.get(index).getObjectName();
+    }
+
+    public void removeTableRow(int index){
+        tableRows.remove(index);
+    }
+
+    public TableRow getTableRow(int index){
+        return tableRows.get(index);
+    }
+
+    public int getNumRows(){
+        return tableRows.size();
+    }
+
     public void createObject(){
         this.createNewFile(tablePath);
         this.createNewFile(attributePath);
@@ -94,7 +121,12 @@ public class DBTable extends DBObject {
     public void appendAttribute(TableAttribute attributeToAppend) throws DBException {
         loadAttributeFile();
         tableAttributes.add(attributeToAppend);
-        updateAttributeFile();
+        defineFileData(attributePath, tableAttributes);
+        loadTableFile();
+        for (TableRow row : tableRows){
+            row.addCell();
+        }
+        defineFileData(tablePath, tableRows);
     };
 
     public void removeAttribute(TableAttribute attributeToRemove) throws DBException {
@@ -114,27 +146,8 @@ public class DBTable extends DBObject {
         if (!foundColumn){
             throw new DBInvalidObjectName("Attribute with this name not present.");
         }
-        updateAttributeFile();
+        defineFileData(attributePath, tableAttributes);
         defineFileData(tablePath, tableRows);
-    };
-    private void updateAttributeFile() throws DBException{
-        File attributeFile = new File(attributePath);
-        if (!attributeFile.exists()){
-            throw new DBObjectDoesNotExistException();
-        }
-        try{
-            FileWriter writer = new FileWriter(attributeFile);
-            BufferedWriter buffWriter = new BufferedWriter(writer);
-            for (int i = 0; i < tableAttributes.size(); i++) {
-                buffWriter.write(tableAttributes.get(i).objectName);
-                buffWriter.newLine();
-                buffWriter.flush();
-            }
-            buffWriter.close();
-        }
-        catch (IOException ioe){
-            System.out.println("You couldn't append a column");
-        }
     }
 
     public void loadAttributeFile() throws DBException {
@@ -160,13 +173,12 @@ public class DBTable extends DBObject {
 
     public void defineFileData(String filepath, ArrayList<? extends DBObject> dataToWrite) throws DBException{
         File attributeFile = new File(filepath);
-        if (attributeFile.exists() && dataToWrite.size() > 0){
+        if (attributeFile.exists()){
             try {
                 FileWriter writer = new FileWriter(attributeFile);
                 BufferedWriter buffWriter = new BufferedWriter(writer);
                 for (DBObject dbObject : dataToWrite) {
                     buffWriter.write(dbObject.toString());
-                    System.out.println(dbObject.toString());
                     buffWriter.newLine();
                     buffWriter.flush();
                 }
@@ -210,6 +222,36 @@ public class DBTable extends DBObject {
 
     public String createPath(String extension){
         return owningDatabase.getObjectName() + File.separator + objectName + "." + extension;
+    }
+
+    public String printTable(ArrayList<TableAttribute> customAttributes) throws DBException {
+        String returnString = "";
+        if (tableRows == null){
+            loadTableFile();
+        }
+        if (tableAttributes.size() == 1){
+            loadAttributeFile();
+        }
+        for (TableAttribute attribute : customAttributes){
+            returnString += attribute.getObjectName() + "\t";
+        }
+        returnString += System.lineSeparator();
+        for (TableRow row : tableRows){
+            for (int i = 0; i < customAttributes.size(); i++){
+                int attributeIndex = getAttributeIndex(customAttributes.get(i).getObjectName());
+                returnString += row.printValue(attributeIndex);
+            }
+            returnString += System.lineSeparator();
+        }
+        System.out.println(returnString);
+        return returnString;
+    }
+
+    public String printTable() throws DBException {
+        if (tableAttributes.size() == 1){
+            loadAttributeFile();
+        }
+        return printTable(tableAttributes);
     }
 
     public static void test() {

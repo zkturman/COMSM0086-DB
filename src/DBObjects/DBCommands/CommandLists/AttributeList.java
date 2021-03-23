@@ -14,16 +14,17 @@ public class AttributeList extends CommandList{
     protected String[] attributeNames;
     protected List<TableAttribute> attributeList;
 
-    public ArrayList<TableAttribute> getAttributeList(){
-        return (ArrayList<TableAttribute>) attributeList;
-    }
-
     protected AttributeList(){}
+
     public AttributeList(String argString) throws DBException{
         String attributeString = removeWhiteSpace(argString);
         attributeString = stripParentheses(attributeString);
         attributeNames = splitValues(attributeString);
         attributeList = new ArrayList<>();
+    }
+
+    public ArrayList<TableAttribute> getAttributeList(){
+        return (ArrayList<TableAttribute>) attributeList;
     }
 
     public boolean parseList() throws DBException {
@@ -32,6 +33,7 @@ public class AttributeList extends CommandList{
         return true;
     }
 
+    @Override
     protected void convertStringToList() throws DBException {
         for (String attribute : attributeNames){
             if (isNameValid(attribute)){
@@ -49,6 +51,7 @@ public class AttributeList extends CommandList{
         return argString.split(",");
     }
 
+    @Override
     protected String removeWhiteSpace(String valueString){
         String valuesNoSpaces = "";
         for (int i = 0; i < valueString.length(); i++){

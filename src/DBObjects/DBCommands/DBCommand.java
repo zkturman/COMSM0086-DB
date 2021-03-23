@@ -56,6 +56,7 @@ public abstract class DBCommand extends DBObject {
             case "INSERT":
                 return new InsertDBCommand(commandArgs);
             case "SELECT":
+                return new SelectDBCommand(commandArgs);
             case "UPDATE":
             case "DELETE":
             case "JOIN":

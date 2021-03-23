@@ -5,7 +5,15 @@ import DBObjects.TableAttribute;
 
 import java.util.ArrayList;
 
+
 public class WildAttributeList extends AttributeList{
+
+    private boolean allAttributes = false;
+
+    public boolean getAllAttributes(){
+        return allAttributes;
+    }
+
     public WildAttributeList(String argString) throws DBException {
         String attributeString = removeWhiteSpace(argString);
         attributeNames = splitValues(attributeString);
@@ -14,7 +22,7 @@ public class WildAttributeList extends AttributeList{
 
     public void convertStringToList() throws DBException {
         if (attributeNames.length == 1 && attributeNames[0].equals("*")){
-            attributeList.add(new TableAttribute(attributeNames[0]));
+            allAttributes = true;
         }
         else{
             super.convertStringToList();

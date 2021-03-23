@@ -1,8 +1,8 @@
 package DBObjects.DBCommands.CommandLists;
 
 import DBException.*;
+import DBObjects.DBTable;
 
-import java.util.EmptyStackException;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,11 +11,26 @@ public class CommandCondition extends CommandList{
 
     String conditionString;
     Stack<String> postFixConditions;
+    DBTable tableToFilter;
+
+    protected CommandCondition(){}
 
     public CommandCondition(String conditionArgs) throws DBException{
-        conditionArgs = replaceOperators(conditionArgs);
-        conditionString = removeWhiteSpace(conditionArgs);
+        conditionString = replaceOperators(conditionArgs);
+    }
 
+    public boolean parseList() throws DBException {
+        convertStringToList();
+        if (postFixConditions.isEmpty()){
+            throw new InvalidCommandArgumentException("Conditions were empty.");
+        }
+        return true;
+    }
+
+    @Override
+    protected void convertStringToList() throws DBException {
+        postFixConditions = stackifyCondition(conditionString);
+        postFixConditions = invertStack(postFixConditions);
     }
 
     public Stack<String> stackifyCondition(String conditionString) throws DBException{
@@ -35,17 +50,22 @@ public class CommandCondition extends CommandList{
                 if (!parenStack.isEmpty()){
                     parenStack.pop();
                 }
+                else {
+                    throw new InvalidCommandArgumentException("Your parentheses are broken.");
+                }
             }
-            else if (isOperator(c)){
-                operatorStack.push(String.valueOf(c));
-            }
-            else if (isBoolean(c)){
+            else if (isOperator(c) || isBoolean(c)){
                 operatorStack.push(String.valueOf(c));
             }
             else if (Character.isLetterOrDigit(c)){
                 int nameEnd = findName(conditionString, i);
                 finalStack.push(conditionString.substring(i, nameEnd));
                 i = nameEnd - 1;
+            }
+            else if (c == '\''){
+                int stringEnd = findStringLiteral(conditionString, i);
+                finalStack.push(conditionString.substring(i, stringEnd));
+                i = stringEnd - 1;
             }
         }
         while (!operatorStack.isEmpty()){
@@ -57,12 +77,138 @@ public class CommandCondition extends CommandList{
         return finalStack;
     }
 
+    public int findName(String conditionString, int startIndex){
+        int endIndex = startIndex;
+        boolean nameEnd = false;
+        int i = startIndex;
+        while (!nameEnd){
+            char c = conditionString.charAt(i);
+            if (isBoolean(c) || isOperator(c) || Character.isWhitespace(c)){
+                nameEnd = true;
+                endIndex = i;
+            }
+            else if (c == '(' || c == ')'){
+                nameEnd = true;
+                endIndex = i;
+            }
+            i++;
+        }
+        return endIndex;
+    }
+
+    public int findStringLiteral(String conditionString, int startIndex){
+        int endIndex = startIndex;
+        boolean stringEnd = false;
+        int i = startIndex + 1;
+
+        while (i < conditionString.length() && !stringEnd){
+            char c = conditionString.charAt(i);
+            if (c == '\''){
+                endIndex = i;
+                stringEnd = true;
+            }
+            i++;
+        }
+        return endIndex + 1;
+    }
+
     public Stack<String> invertStack(Stack<String> oldStack){
         Stack<String> invertedStack = new Stack<>();
         while (!oldStack.isEmpty()){
             invertedStack.push(oldStack.pop());
         }
         return invertedStack;
+    }
+
+    public void executeConditions(DBTable tableToFilter) throws DBException{
+        this.tableToFilter = tableToFilter;
+        tableToFilter.loadAttributeFile();
+        int rowNumber = 0;
+        for (int i = 0; i < tableToFilter.getNumRows() ; i++) {
+            Stack<String> evaluation = (Stack<String>) postFixConditions.clone();
+            if (!evaluateConditions(evaluation, i)) {
+                tableToFilter.removeTableRow(i);
+                i--;
+            }
+        }
+    }
+
+    public boolean evaluateConditions(Stack<String> conditions, int rowNumber) throws DBException {
+        Stack<String> valueStack = new Stack<>();
+        String value1, value2, operator;
+        while(!conditions.isEmpty()){
+            if (isSymbol(conditions.peek())){
+                operator = conditions.pop();
+                if (valueStack.isEmpty()){
+                    throw new DBCommandFormException("Conditions were not of the correct form.");
+                }
+                value1 = valueStack.pop();
+                if (valueStack.isEmpty()){
+                    throw new DBCommandFormException("Conditions were not of the correct form.");
+                }
+                value2 = valueStack.pop();
+                //values reversed after popping off stack
+                DBExpression expression = new DBExpression(value2, value1, operator);
+                valueStack.push(expression.performOperation(tableToFilter, rowNumber));
+            }
+            else{
+                valueStack.push(conditions.pop());
+            }
+        }
+        return getConditionResult(valueStack);
+    }
+
+    public boolean getConditionResult(Stack<String> resultStack) throws DBException {
+        if (resultStack.isEmpty()){
+            throw new DBCommandFormException("Conditions were not of the correct form.");
+        }
+        String finalValue = resultStack.pop();
+        if (!resultStack.isEmpty()){
+            throw new DBCommandFormException("Conditions were not of the correct form.");
+        }
+        if (finalValue.equals("1")){
+            return true;
+        }
+        if (finalValue.equals("0")){
+            return false;
+        }
+        else{
+            throw new DBCommandFormException("Conditions were not of the correct form.");
+        }
+    }
+
+    public boolean isSymbol(String piece){
+        switch (piece){
+            case "&":
+            case "+":
+            case "~":
+            case "=":
+            case "!":
+            case "<":
+            case ">":
+            case "£":
+            case "@":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public boolean isOperator(char symbol){
+        switch(symbol){
+            case '>':
+            case '<':
+            case '=':
+            case '!':
+            case '~':
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public boolean isBoolean(char symbol){
+        return symbol == '&' || symbol == '+';
     }
 
     public String replaceOperators(String conditionString) throws DBException {
@@ -83,19 +229,19 @@ public class CommandCondition extends CommandList{
         conditionString = replacePhrase(conditionString, "(?<=\\))\\s*or\\s*(?=\\()", "+");
 
         //replace LIKE with ~
-        conditionString = replacePhrase(conditionString, "(?<=\\w)\\s+like\\s+(?=\\w)", "~");
+        conditionString = replacePhrase(conditionString, "(?<=\\w)\\s+like\\s+(?=(\\w+|\\'\\w+))", "~");
 
         //replace == with =
-        conditionString = replacePhrase(conditionString, "\\s*\\=\\=\\s*", "=");
+        conditionString = replacePhrase(conditionString, "\\s*\\=\\=\\s*(?=(\\w+|\\'\\w+))", "=");
 
         //replace != with !
-        conditionString = replacePhrase(conditionString, "\\s*\\!\\=\\s*", "!");
+        conditionString = replacePhrase(conditionString, "\\s*\\!\\=\\s*(?=(\\w+|\\'\\w+))", "!");
 
         //replace >= with @
-        conditionString = replacePhrase(conditionString, "\\s*\\>\\=\\s*", "@");
+        conditionString = replacePhrase(conditionString, "\\s*\\>\\=\\s*(?=(\\w+|\\'\\w+))", "@");
 
         //replace <= with £
-        conditionString = replacePhrase(conditionString, "\\s*\\<\\=\\s*", "£");
+        conditionString = replacePhrase(conditionString, "\\s*\\<\\=\\s*(?=(\\w+|\\'\\w+))", "£");
 
         return conditionString;
     }
@@ -108,94 +254,6 @@ public class CommandCondition extends CommandList{
         return phrase;
     }
 
-    public boolean isOperator(char symbol){
-        switch(symbol){
-            case '>':
-            case '<':
-            case '=':
-            case '!':
-            case '~':
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    public boolean isBoolean(char symbol){
-        return symbol == '&' || symbol == '+';
-    }
-
-    public int findName(String conditionString, int startIndex){
-        int endIndex = startIndex;
-        boolean nameEnd = false;
-        int i = startIndex;
-        while (!nameEnd){
-            char c = conditionString.charAt(i);
-            if (isBoolean(c) || isOperator(c)){
-                nameEnd = true;
-                endIndex = i;
-            }
-            else if (c == '(' || c == ')'){
-                nameEnd = true;
-                endIndex = i;
-            }
-            i++;
-        }
-        if (startIndex == endIndex){
-            return -1;
-        }
-        return endIndex;
-    }
-
-    public boolean parseList() throws DBException {
-        postFixConditions = stackifyCondition(conditionString);
-        postFixConditions = invertStack(postFixConditions);
-        Stack<String> stackToVerify = (Stack<String>) postFixConditions.clone();
-        if (!tryConditions(stackToVerify)){
-            throw new DBCommandFormException("Conditions were not of the correct form");
-        }
-        return true;
-    }
-
-    public boolean tryConditions(Stack<String> conditions) throws DBException{
-        Stack<String> valueStack = new Stack<>();
-        while(!conditions.isEmpty()){
-            if (isSymbol(conditions.peek())){
-                conditions.pop();
-                try {
-                    //net gain of one value for testing
-                    valueStack.pop();
-                }
-                catch (EmptyStackException ese){
-                    throw new DBCommandFormException("Conditions were not of the correct form.");
-                }
-            }
-            else{
-                valueStack.push(conditions.pop());
-            }
-        }
-        return true;
-    }
-
-    public boolean isSymbol(String piece){
-        switch (piece){
-            case "&":
-            case "+":
-            case "~":
-            case "=":
-            case "!":
-            case "<":
-            case ">":
-            case "£":
-            case "@":
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    public void convertStringToList() throws DBException {}
-
     @Override
     protected String[] splitValues(String argString) throws DBException {
         return new String[0];
@@ -203,7 +261,7 @@ public class CommandCondition extends CommandList{
 
     @Override
     protected String removeWhiteSpace(String valueString) {
-        return null;
+        return valueString;
     }
 
     public static void test(){
