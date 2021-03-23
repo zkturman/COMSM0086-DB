@@ -1,43 +1,59 @@
 package DBObjects.DBCommands.CommandLists;
 
-import DBException.DBException;
+import DBException.*;
 
-import java.nio.charset.StandardCharsets;
+import java.util.EmptyStackException;
 import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CommandCondition extends CommandList{
 
     String conditionString;
+    Stack<String> postFixConditions;
 
-    public CommandCondition(String conditionString){
-        this.conditionString = removeWhiteSpace(conditionString);
+    public CommandCondition(String conditionArgs) throws DBException{
+        conditionArgs = replaceOperators(conditionArgs);
+        conditionString = removeWhiteSpace(conditionArgs);
+
     }
 
-    public Stack<String> stackifyCondition(String conditionString){
+    public Stack<String> stackifyCondition(String conditionString) throws DBException{
         Stack<String> parenStack = new Stack<>();
         Stack<String> finalStack = new Stack<>();
         Stack<String> operatorStack = new Stack<>();
 
         for (int i = 0; i < conditionString.length(); i++){
-            if (isOperator(conditionString, i) > 0){
-                operatorStack.push(conditionString.substring(i, isOperator(conditionString, i)));
+            char c = conditionString.charAt(i);
+            if (c == '('){
+                parenStack.push(String.valueOf(c));
             }
-            if (isBoolean(conditionString, i) > 0){
-                operatorStack.push(conditionString.substring(i, isBoolean(conditionString, i)));
-            }
-            if (isName(conditionString, i) > 0){
-                finalStack.push(conditionString.substring(i, isName(conditionString, i)));
-            }
-            if (conditionString.charAt(i) == '('){
-                parenStack.push(conditionString.substring(i, i + 1));
-            }
-            if (conditionString.charAt(i) == ')'){
-                if (operatorStack.peek() != null){
+            else if (c == ')'){
+                if (!operatorStack.isEmpty()){
                     finalStack.push(operatorStack.pop());
                 }
+                if (!parenStack.isEmpty()){
+                    parenStack.pop();
+                }
+            }
+            else if (isOperator(c)){
+                operatorStack.push(String.valueOf(c));
+            }
+            else if (isBoolean(c)){
+                operatorStack.push(String.valueOf(c));
+            }
+            else if (Character.isLetterOrDigit(c)){
+                int nameEnd = findName(conditionString, i);
+                finalStack.push(conditionString.substring(i, nameEnd));
+                i = nameEnd - 1;
             }
         }
-        invertStack(finalStack);
+        while (!operatorStack.isEmpty()){
+            finalStack.push(operatorStack.pop());
+        }
+        if (!parenStack.isEmpty()){
+            throw new DBCommandFormException("Command was not of the correct form. Try parentheses.");
+        }
         return finalStack;
     }
 
@@ -49,66 +65,77 @@ public class CommandCondition extends CommandList{
         return invertedStack;
     }
 
-    public int isOperator(String conditionString, int operatorIndex){
-        int conditionSize = conditionString.length();
-        if (conditionString.charAt(operatorIndex) == '>'){
-            return conditionSize;
+    public String replaceOperators(String conditionString) throws DBException {
+        if (conditionString.contains("&")){
+            throw new InvalidCommandArgumentException("Condition contains invalid characters.");
         }
-        if (conditionString.charAt(operatorIndex) == '<'){
-            return conditionSize;
+        if (conditionString.contains("+")){
+            throw new InvalidCommandArgumentException("Condition contains invalid characters.");
         }
-        String twoDigitOp = conditionString.substring(operatorIndex, operatorIndex + 2);
-        if (twoDigitOp.equals("==")){
-            return conditionSize;
-        }
-        if (twoDigitOp.equals("!=")) {
-            return conditionSize;
-        }
-        if (twoDigitOp.equals(">=")){
-            return conditionSize;
-        }
-        if (twoDigitOp.equals("<=")){
-            return conditionSize;
-        }
-        if (conditionString.substring(operatorIndex, operatorIndex + 4).equals("LIKE")){
-            return conditionSize;
+        if (conditionString.contains("~")){
+            throw new InvalidCommandArgumentException("Condition contains invalid characters.");
         }
 
-        return -1;
+        //replace AND with &
+        conditionString = replacePhrase(conditionString, "(?<=\\))\\s*and\\s*(?=\\()", "&");
+
+        //replace OR with +
+        conditionString = replacePhrase(conditionString, "(?<=\\))\\s*or\\s*(?=\\()", "+");
+
+        //replace LIKE with ~
+        conditionString = replacePhrase(conditionString, "(?<=\\w)\\s+like\\s+(?=\\w)", "~");
+
+        //replace == with =
+        conditionString = replacePhrase(conditionString, "\\s*\\=\\=\\s*", "=");
+
+        //replace != with !
+        conditionString = replacePhrase(conditionString, "\\s*\\!\\=\\s*", "!");
+
+        //replace >= with @
+        conditionString = replacePhrase(conditionString, "\\s*\\>\\=\\s*", "@");
+
+        //replace <= with £
+        conditionString = replacePhrase(conditionString, "\\s*\\<\\=\\s*", "£");
+
+        return conditionString;
     }
 
-    public int isBoolean(String conditionString, int operatorIndex){
-        int conditionSize = conditionString.length();
-        if (isAnd()){
-            return conditionSize;
+    public String replacePhrase(String phrase, String regex, String replacement){
+        Pattern replacePattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        Matcher m = replacePattern.matcher(phrase);
+        m.find();
+        phrase = m.replaceAll(replacement);
+        return phrase;
+    }
+
+    public boolean isOperator(char symbol){
+        switch(symbol){
+            case '>':
+            case '<':
+            case '=':
+            case '!':
+            case '~':
+                return true;
+            default:
+                return false;
         }
-        if (isOr()){
-            return conditionSize;
-        }
-        return -1;
-    }
-    public boolean isAnd(){
-        return true;
     }
 
-    public boolean isOr(){
-        return true;
+    public boolean isBoolean(char symbol){
+        return symbol == '&' || symbol == '+';
     }
 
-    public boolean isLike(){
-        return true;
-    }
-
-    public int isName(String conditionString, int startIndex){
+    public int findName(String conditionString, int startIndex){
         int endIndex = startIndex;
         boolean nameEnd = false;
         int i = startIndex;
         while (!nameEnd){
-            if (isBoolean(conditionString, i) > 0){
+            char c = conditionString.charAt(i);
+            if (isBoolean(c) || isOperator(c)){
                 nameEnd = true;
                 endIndex = i;
             }
-            if (isOperator(conditionString, i) > 0){
+            else if (c == '(' || c == ')'){
                 nameEnd = true;
                 endIndex = i;
             }
@@ -120,7 +147,52 @@ public class CommandCondition extends CommandList{
         return endIndex;
     }
 
-    public boolean parseList(){return true;}
+    public boolean parseList() throws DBException {
+        postFixConditions = stackifyCondition(conditionString);
+        postFixConditions = invertStack(postFixConditions);
+        Stack<String> stackToVerify = (Stack<String>) postFixConditions.clone();
+        if (!tryConditions(stackToVerify)){
+            throw new DBCommandFormException("Conditions were not of the correct form");
+        }
+        return true;
+    }
+
+    public boolean tryConditions(Stack<String> conditions) throws DBException{
+        Stack<String> valueStack = new Stack<>();
+        while(!conditions.isEmpty()){
+            if (isSymbol(conditions.peek())){
+                conditions.pop();
+                try {
+                    //net gain of one value for testing
+                    valueStack.pop();
+                }
+                catch (EmptyStackException ese){
+                    throw new DBCommandFormException("Conditions were not of the correct form.");
+                }
+            }
+            else{
+                valueStack.push(conditions.pop());
+            }
+        }
+        return true;
+    }
+
+    public boolean isSymbol(String piece){
+        switch (piece){
+            case "&":
+            case "+":
+            case "~":
+            case "=":
+            case "!":
+            case "<":
+            case ">":
+            case "£":
+            case "@":
+                return true;
+            default:
+                return false;
+        }
+    }
 
     public void convertStringToList() throws DBException {}
 
@@ -132,5 +204,17 @@ public class CommandCondition extends CommandList{
     @Override
     protected String removeWhiteSpace(String valueString) {
         return null;
+    }
+
+    public static void test(){
+        try {
+            CommandCondition test1 = new CommandCondition("test");
+            String replace1 = test1.replaceOperators("((A==x) aNd (B>=c)) or (C != d)");
+            assert replace1.equals("((A=x)&(B@c))+(C!d)");
+            String replace2 = test1.replaceOperators("(Are==xeo) and (b==c)");
+            Stack<String> testStack = test1.stackifyCondition(replace2);
+        }
+        catch (DBException dbe){}
+        System.out.println("CommandCondition passed.");
     }
 }
