@@ -83,11 +83,6 @@ public class AlterDBCommand extends DBCommand {
         return tokenAry[index];
     }
 
-    @Override
-    public String[] removeCommandName(String[] tokenizedCommand) {
-        return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
-    }
-
     private boolean convertStringToAlterType(String alterString){
         switch(alterString.toUpperCase()){
             case "ADD":

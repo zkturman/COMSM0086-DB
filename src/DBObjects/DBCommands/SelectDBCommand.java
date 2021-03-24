@@ -45,15 +45,14 @@ public class SelectDBCommand extends DBCommand{
         }
         String tableName = getNextToken(tokenizedCommand, currentToken++);
         setupTable(tableName);
-        if (shouldCheckConditions()){
+        if (currentToken != tokenizedCommand.length){
             String whereString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
             if (!whereString.equals("WHERE")){
                 throw new InvalidCommandArgumentException("Expected \"WHERE\" string in select command.");
             }
-            prepareConditions();
-        }
-        if (tokenizedCommand.length != currentToken){
-            listString = commandString.split("\\s+where\\s+")[1];
+            if (listString == null){
+                listString = commandString.split("\\s+where\\s+")[1];
+            }
             prepareConditions();
         }
     }
@@ -92,9 +91,11 @@ public class SelectDBCommand extends DBCommand{
             selectConditions.executeConditions(tableToRead);
         }
         if (selectAttributes.getAllAttributes()){
-            tableToRead.printTable();
+            returnMessage = tableToRead.printTable();
         }
-        tableToRead.printTable(selectAttributes.getAttributeList());
+        else{
+            returnMessage = tableToRead.printTable(selectAttributes.getAttributeList());
+        }
     }
 
     @Override
@@ -115,11 +116,6 @@ public class SelectDBCommand extends DBCommand{
             throw new InvalidCommandArgumentException("Select command was missing the correct number of arguments.");
         }
         return tokenAry[index];
-    }
-
-    @Override
-    public String[] removeCommandName(String[] tokenizedCommand) {
-        return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
     }
 
     public static void test(){

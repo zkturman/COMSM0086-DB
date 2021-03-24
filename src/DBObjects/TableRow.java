@@ -1,10 +1,13 @@
 package DBObjects;
 
 
+import DBException.DBException;
+import DBException.DBOutOfRangeException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class TableRow extends DBObject implements DBTableObject{
+public class TableRow extends DBObject implements DBTableObject {
     public ArrayList<String> rowData;
 
     public TableRow(String[] rowData){
@@ -12,7 +15,7 @@ public class TableRow extends DBObject implements DBTableObject{
     }
 
     public TableRow(String tabbedRowData){
-        String[] rowAry = tabbedRowData.split("(\\t(?<!(\\t)\\t)|(?!(\\t)\\t)\\t)");
+        String[] rowAry = tabbedRowData.split("\\t");
         this.rowData = new ArrayList<>(Arrays.asList(rowAry));
     }
 
@@ -41,11 +44,17 @@ public class TableRow extends DBObject implements DBTableObject{
         rowData.add(0, idString);
     }
 
-    public void addCell(){
-        rowData.add("\t");
+    public void appendCell(){
+        rowData.add("\'\'");
     }
 
     public void removeValue(int index){
         rowData.remove(index);
+    }
+    public void updateValue(String value, int index) throws DBException {
+        if (index >= rowData.size()){
+            throw new DBOutOfRangeException("Attempted to edit a cell outside the range of data.");
+        }
+        rowData.set(index, value);
     }
 }

@@ -3,6 +3,9 @@ package DBObjects;
 import DBException.*;
 import DBObjects.DBCommands.DBCommand;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class DBStatement {
     Database workingDatabase = null;
     public String[] commandToProcess;
@@ -32,7 +35,15 @@ public class DBStatement {
     }
 
     private String getFirstToken(String mainCommand){
-        return mainCommand.split("(\\s+|\\s*\\*)")[0];
+        Pattern tokenPattern = Pattern.compile("\\s*[a-zA-Z0-9]+(\\s+|\\*)", Pattern.CASE_INSENSITIVE);
+        Matcher tokenMatcher = tokenPattern.matcher(mainCommand);
+        tokenMatcher.find();
+        String commandName = tokenMatcher.group();
+        System.out.println(commandName);
+        commandName = commandName.replaceAll("\\s", "");
+        System.out.println(commandName);
+        //return mainCommand.split("(\\s+|\\s*\\*)")[0];
+        return commandName;
     }
 
     private String removeSemicolon(String statement) throws DBException {

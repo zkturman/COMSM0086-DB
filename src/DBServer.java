@@ -43,14 +43,16 @@ public class DBServer {
             DBStatement dbStatement = new DBStatement(workingDatabase);
             try{
                 dbStatement.performStatement(incomingCommand);
+                socketWriter.write("[OK] Processed: " + incomingCommand);
             }
             catch(DBException de){
-                socketWriter.write(de.toString());
+                socketWriter.write("[ERROR] " + de.toString());
             }
+            socketWriter.write("\n" + ((char)4) + "\n");
+
             this.workingDatabase = dbStatement.getWorkingDatabase();
             //return string of some sort for errors and success
-            socketWriter.write("[OK] Thanks for your message: " + incomingCommand);
-            socketWriter.write("\n" + ((char)4) + "\n");
+
             socketWriter.flush();
         }
 

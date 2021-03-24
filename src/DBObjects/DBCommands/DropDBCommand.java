@@ -13,11 +13,6 @@ public class DropDBCommand extends DropCreateDBCommand {
     }
 
     @Override
-    public String[] removeCommandName(String[] tokenizedCommand) {
-        return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
-    }
-
-    @Override
     public void setupListVars(String[] commandArgs) throws DBException {
         if (commandArgs.length > 1){
             throw new InvalidCommandArgumentException("Drop command has unexpected arguments.");

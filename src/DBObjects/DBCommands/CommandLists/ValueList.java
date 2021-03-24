@@ -13,6 +13,8 @@ public class ValueList extends CommandList{
     private String[] valueContents;
     private TableRow valueList;
 
+    protected ValueList(){}
+
     public ValueList(String argString) throws DBException {
         String valueString = removeWhiteSpace(argString);
         valueString = stripParentheses(valueString);
@@ -31,6 +33,12 @@ public class ValueList extends CommandList{
         return true;
     }
 
+    /**
+     * Splits the values of a list on any commas that are not within single quotation marks '\''
+     * @param valueString String to split
+     * @return Array of strings containing separate values.
+     * @throws DBException if the list ends with a comma
+     */
     protected String[] splitValues(String valueString) throws DBException {
         //need the inverse of split on this ((\'.*?\'|[^\',\s]+))
         //here it is ,(?=(?:[^\']*\'[^\']*\')*[^\']*$)
@@ -55,6 +63,10 @@ public class ValueList extends CommandList{
         return splitList.toArray(returnAry);
     }
 
+    /**
+     * Converts the values into a TableRow
+     * @throws DBException if any values in the list are none of string, boolean, float, or integer literals
+     */
     public void convertStringToList() throws DBException {
         for (String valueStr : valueContents) {
             if (!isValidValue(valueStr)) {
@@ -64,18 +76,23 @@ public class ValueList extends CommandList{
         valueList = new TableRow(valueContents);
     }
 
+    /**
+     * Removes whites space from a list except whitespace found in single quotation marks '\''
+     * @param valueString String to remove whitespace from
+     * @return Input string without whitespace
+     */
     protected String removeWhiteSpace(String valueString){
         boolean inQuotes = false;
-        String valuesNoSpaces = "";
+        StringBuilder valuesNoSpaces = new StringBuilder();
         for (int i = 0; i < valueString.length(); i++){
             if (valueString.charAt(i) == '\''){
                 inQuotes = !inQuotes;
             }
             if (!Character.isWhitespace(valueString.charAt(i)) || inQuotes){
-                valuesNoSpaces += valueString.charAt(i);
+                valuesNoSpaces.append(valueString.charAt(i));
             }
         }
-        return valuesNoSpaces;
+        return valuesNoSpaces.toString();
     }
 
     public static void test(){

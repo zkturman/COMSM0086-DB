@@ -1,11 +1,12 @@
 package DBObjects;
 
 import DBException.*;
+import DBObjects.DBCommands.CommandLists.NameValueList;
 
 import java.io.*;
 import java.util.ArrayList;
 
-public class DBTable extends DBObject {
+public class DBTable extends DBObject implements DBTableObject {
     String attributePath;
     String tablePath;
     Database owningDatabase;
@@ -124,7 +125,7 @@ public class DBTable extends DBObject {
         defineFileData(attributePath, tableAttributes);
         loadTableFile();
         for (TableRow row : tableRows){
-            row.addCell();
+            row.appendCell();
         }
         defineFileData(tablePath, tableRows);
     };
@@ -212,20 +213,29 @@ public class DBTable extends DBObject {
         }
     }
 
-    private File returnDBFile(String fileName, String fileExtension){
-        File fileToOpen = new File(fileName + "." + fileExtension);
-        if(!fileToOpen.exists()){
-            System.out.println("This file doesn't exist, throw an error.");
-        }
-        return fileToOpen;
-    }
-
     public String createPath(String extension){
         return owningDatabase.getObjectName() + File.separator + objectName + "." + extension;
     }
 
+    public void updateTable(NameValueList updateNameValues) throws DBException {
+        ArrayList<TableRow> rowsToChange = tableRows;
+        tableRows.clear();
+        loadTableFile();
+        ArrayList<TableAttribute> attributesToUpdate = updateNameValues.getAttributesToChange();
+        ArrayList<String> valuesForUpdates = updateNameValues.getValuesForChange();
+        for (int i = 0; i < attributesToUpdate.size(); i++){
+            TableAttribute attribute = attributesToUpdate.get(i);
+            int attributeIndex = getAttributeIndex(attribute.getObjectName());
+            String valueToUse = valuesForUpdates.get(i);
+            for (TableRow row : tableRows){
+                row.updateValue(valueToUse, attributeIndex);
+            }
+        }
+        defineFileData(tablePath, tableRows);
+    }
+
     public String printTable(ArrayList<TableAttribute> customAttributes) throws DBException {
-        String returnString = "";
+        StringBuilder returnString = new StringBuilder();
         if (tableRows == null){
             loadTableFile();
         }
@@ -233,18 +243,18 @@ public class DBTable extends DBObject {
             loadAttributeFile();
         }
         for (TableAttribute attribute : customAttributes){
-            returnString += attribute.getObjectName() + "\t";
+            returnString.append(attribute.getObjectName()).append("\t");
         }
-        returnString += System.lineSeparator();
+        returnString.append(System.lineSeparator());
         for (TableRow row : tableRows){
             for (int i = 0; i < customAttributes.size(); i++){
                 int attributeIndex = getAttributeIndex(customAttributes.get(i).getObjectName());
-                returnString += row.printValue(attributeIndex);
+                returnString.append(row.printValue(attributeIndex));
             }
-            returnString += System.lineSeparator();
+            returnString.append(System.lineSeparator());
         }
-        System.out.println(returnString);
-        return returnString;
+        //System.out.println(returnString);
+        return returnString.toString();
     }
 
     public String printTable() throws DBException {

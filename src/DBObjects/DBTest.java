@@ -14,6 +14,7 @@ public class DBTest extends DBObject {
         WildAttributeList.test();
         CommandCondition.test();
         DBExpression.test();
+        NameValueList.test();
     }
     public static void passMessage(String completeMessage){
         System.out.println(completeMessage);

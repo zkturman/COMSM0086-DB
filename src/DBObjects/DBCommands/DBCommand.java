@@ -11,6 +11,11 @@ public abstract class DBCommand extends DBObject {
     public String listString;
     protected StructureType structureType;
     Database workingDatabase;
+    protected String returnMessage;
+
+    public String getReturnMessage() {
+        return returnMessage;
+    }
 
     public Database getWorkingDatabase() {
         return workingDatabase;
@@ -58,10 +63,11 @@ public abstract class DBCommand extends DBObject {
             case "SELECT":
                 return new SelectDBCommand(commandArgs);
             case "UPDATE":
+                return new UpdateDBCommand(commandArgs);
             case "DELETE":
             case "JOIN":
             default:
-                return null;
+                throw new DBInvalidCommandException("An invalid command was entered.");
         }
     }
 
@@ -100,7 +106,15 @@ public abstract class DBCommand extends DBObject {
     public abstract void executeCommand() throws DBException;
     public abstract String[] splitCommand(String commandString) throws DBException;
     public abstract String getNextToken(String[] tokenAry, int index) throws DBException;
-    public abstract String[] removeCommandName(String[] tokenizedCommand);
+
+    public String[] removeCommandName(String[] tokenizedCommand) {
+        int startIndex = 1;
+        if (tokenizedCommand[0].equals("")){
+            startIndex = 2;
+        }
+        return Arrays.copyOfRange(tokenizedCommand, startIndex, tokenizedCommand.length);
+    }
+
     public static void test(){
     }
 }

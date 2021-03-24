@@ -62,7 +62,6 @@ public abstract class DropCreateDBCommand extends DBCommand {
         return tokenAry[index];
     }
 
-    public abstract String[] removeCommandName(String[] tokenizedCommand);
     public abstract void setupListVars(String[] commandArgs) throws DBException;
     public abstract void executeCommand() throws DBException;
     public abstract void prepareList(String listString) throws DBException;

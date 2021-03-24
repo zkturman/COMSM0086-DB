@@ -46,11 +46,6 @@ public class UseDBCommand extends DBCommand {
         return tokenAry[index];
     }
 
-    @Override
-    public String[] removeCommandName(String[] tokenizedCommand) {
-        return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
-    }
-
     public static void test(){
 
     }

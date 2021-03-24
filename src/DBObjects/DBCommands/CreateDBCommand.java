@@ -14,11 +14,6 @@ public class CreateDBCommand extends DropCreateDBCommand {
     }
 
     @Override
-    public String[] removeCommandName(String[] tokenizedCommand){
-        return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
-    }
-
-    @Override
     public void setupListVars(String[] createArgs) throws DBException {
         if (createArgs.length > 1){
             listString = createArgs[1];

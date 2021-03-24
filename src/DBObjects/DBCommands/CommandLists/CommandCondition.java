@@ -78,22 +78,18 @@ public class CommandCondition extends CommandList{
     }
 
     public int findName(String conditionString, int startIndex){
-        int endIndex = startIndex;
-        boolean nameEnd = false;
         int i = startIndex;
-        while (!nameEnd){
+        while (i < conditionString.length()){
             char c = conditionString.charAt(i);
             if (isBoolean(c) || isOperator(c) || Character.isWhitespace(c)){
-                nameEnd = true;
-                endIndex = i;
+                return i;
             }
             else if (c == '(' || c == ')'){
-                nameEnd = true;
-                endIndex = i;
+                return i;
             }
             i++;
         }
-        return endIndex;
+        return i;
     }
 
     public int findStringLiteral(String conditionString, int startIndex){
