@@ -6,10 +6,10 @@ import DBObjects.DBTable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Locale;
 
 public class DeleteDBCommand extends DBCommand {
 
-    DBTable tableToDelete;
     CommandCondition deleteConditions;
 
     public DeleteDBCommand(String[] deleteArgs) throws DBException {
@@ -17,22 +17,40 @@ public class DeleteDBCommand extends DBCommand {
         if (!commandHasArguments(deleteArgs)){
             throw new InvalidCommandArgumentException("Delete command has no arguments.");
         }
-        if (deleteArgs.length != 2){
-            throw new InvalidCommandArgumentException("Delete command has the incorrect form.");
-        }
         commandString = deleteArgs[0];
         tokenizedCommand = splitCommand(commandString);
         tokenizedCommand = removeCommandName(tokenizedCommand);
+        if (deleteArgs.length ==2){
+            listString = deleteArgs[1];
+        }
+        if (deleteArgs.length > 2){
+            throw new InvalidCommandArgumentException("Delete command has the incorrect form.");
+        }
     }
 
     @Override
     public void prepareCommand() throws DBException {
         int currentToken = 0;
-        String fromString;
-        String tableName;
+        String fromString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
+        if (!fromString.equals("FROM")){
+            throw new InvalidCommandArgumentException("Expected \"FROM\" string in delete command.");
+        }
+        String tableName = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
+        //Configured in DBCommand parent class
+        setupTable(tableName);
         String whereString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
         if (!whereString.equals("WHERE")){
             throw new InvalidCommandArgumentException("Expected \"WHERE\" string in select command.");
+        }
+        if (currentToken != tokenizedCommand.length && listString == null){
+            listString = commandString.split("\\s+where\\s+")[1];
+            tokenizedCommand = Arrays.copyOfRange(tokenizedCommand, 0, currentToken);
+        }
+        if (currentToken == tokenizedCommand.length && listString != null) {
+            prepareConditions();
+        }
+        else{
+            throw new InvalidCommandArgumentException("Update conditions were of the incorrect form.");
         }
         prepareConditions();
     }
@@ -44,20 +62,8 @@ public class DeleteDBCommand extends DBCommand {
 
     @Override
     public void executeCommand() throws DBException {
-
-    }
-
-    @Override
-    public String[] splitCommand(String commandString) throws DBException {
-        return commandString.split("\\s+");
-    }
-
-    @Override
-    public String getNextToken(String[] tokenAry, int index) throws DBException {
-        if (index >= tokenAry.length){
-            throw new InvalidCommandArgumentException("Delete command has the incorrect number of arguments");
-        }
-        return tokenAry[index];
+        deleteConditions.executeConditions(tableForCommand);
+        tableForCommand.deleteRows();
     }
 
     @Override

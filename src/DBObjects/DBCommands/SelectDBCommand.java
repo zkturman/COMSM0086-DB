@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 public class SelectDBCommand extends DBCommand{
 
     String attributeString;
-    DBTable tableToRead;
     WildAttributeList selectAttributes;
     CommandCondition selectConditions;
 
@@ -44,6 +43,7 @@ public class SelectDBCommand extends DBCommand{
             throw new InvalidCommandArgumentException("Expected \"FROM\" string in select command");
         }
         String tableName = getNextToken(tokenizedCommand, currentToken++);
+        //Configured in DBCommand parent class
         setupTable(tableName);
         if (currentToken != tokenizedCommand.length){
             String whereString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
@@ -51,7 +51,7 @@ public class SelectDBCommand extends DBCommand{
                 throw new InvalidCommandArgumentException("Expected \"WHERE\" string in select command.");
             }
             if (listString == null){
-                listString = commandString.split("\\s+where\\s+")[1];
+                listString = commandString.split("(?i)\\s+where\\s+")[1];
             }
             prepareConditions();
         }
@@ -62,24 +62,6 @@ public class SelectDBCommand extends DBCommand{
         selectAttributes.parseList();
     }
 
-    public void setupTable(String tableName) throws DBException {
-        if (tableName.length() == 0) {
-            throw new InvalidCommandArgumentException("No table name provided.");
-        }
-        if (!isNameValid(tableName)) {
-            throw new InvalidCommandArgumentException("Table name was invalid.");
-        }
-        if (workingDatabase == null){
-            throw new NotUsingDBException("No working database has been selected.");
-        }
-        tableToRead = new DBTable(tableName, workingDatabase);
-        tableToRead.loadTableFile();
-    }
-
-    public boolean shouldCheckConditions(){
-        return listString != null;
-    }
-
     public void prepareConditions() throws DBException {
         selectConditions = new CommandCondition(listString);
         selectConditions.parseList();
@@ -88,34 +70,27 @@ public class SelectDBCommand extends DBCommand{
     @Override
     public void executeCommand() throws DBException {
         if (selectConditions != null){
-            selectConditions.executeConditions(tableToRead);
+            selectConditions.executeConditions(tableForCommand);
         }
         if (selectAttributes.getAllAttributes()){
-            returnMessage = tableToRead.printTable();
+            returnMessage = tableForCommand.printTable();
         }
         else{
-            returnMessage = tableToRead.printTable(selectAttributes.getAttributeList());
+            returnMessage = tableForCommand.printTable(selectAttributes.getAttributeList());
         }
     }
 
     @Override
     public String[] splitCommand(String commandString) throws DBException {
         //get attribute list:
-        //((?<=select)\*(?=from\s+)|(?<=select)\s+.*\s+(?=from\s+))
         Pattern attributePattern = Pattern.compile("(?<=select).*(?=from\\s+)", Pattern.CASE_INSENSITIVE);
         Matcher attributeMatcher = attributePattern.matcher(commandString);
-        attributeMatcher.find();
-        attributeString = attributeMatcher.group();
-        commandString = commandString.replaceFirst(attributeMatcher.pattern().pattern(), " ");
-        return commandString.split("\\s+");
-    }
-
-    @Override
-    public String getNextToken(String[] tokenAry, int index) throws DBException {
-        if (index >= tokenAry.length){
-            throw new InvalidCommandArgumentException("Select command was missing the correct number of arguments.");
+        if (!attributeMatcher.find()){
+            throw new InvalidCommandArgumentException("Could not find attribute list in select statement.");
         }
-        return tokenAry[index];
+        attributeString = attributeMatcher.group();
+        commandString = attributeMatcher.replaceFirst(" ");
+        return commandString.split("\\s+");
     }
 
     public static void test(){

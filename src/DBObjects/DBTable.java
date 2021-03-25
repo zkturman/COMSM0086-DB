@@ -9,23 +9,48 @@ import java.util.ArrayList;
 public class DBTable extends DBObject implements DBTableObject {
     String attributePath;
     String tablePath;
-    Database owningDatabase;
+    DBDatabase owningDatabase;
     private ArrayList<TableAttribute> tableAttributes;
     private ArrayList<TableRow> tableRows;
+    private TableAttribute joinAttribute;
 
-    public Database getOwningDatabase() {
+    public DBDatabase getOwningDatabase() {
         return owningDatabase;
     }
 
-    public void setOwningDatabase(Database owningDatabase) {
+    public void setOwningDatabase(DBDatabase owningDatabase) {
         this.owningDatabase = owningDatabase;
+    }
+
+    public TableAttribute getJoinAttribute() {
+        return joinAttribute;
+    }
+
+    public void setJoinAttribute(TableAttribute joinAttribute) throws DBException {
+        tableAttributes.clear();
+        loadAttributeFile();
+        boolean found = false;
+        for (TableAttribute attribute : tableAttributes){
+            if (attribute.equals(joinAttribute)){
+                found = true;
+            }
+        }
+        if (!found){
+            throw new DBObjectDoesNotExistException("Could not find attribute to join in table.");
+        }
+        this.joinAttribute = joinAttribute;
+    }
+
+    public ArrayList<TableRow> getTableRows() {
+        return tableRows;
+    }
+
+    public ArrayList<TableAttribute> getTableAttributes() {
+        return tableAttributes;
     }
 
     public void setTableAttributes(ArrayList<TableAttribute> tableAttributes) throws DBException{
         this.tableAttributes.addAll(tableAttributes);
-        for (TableAttribute att: tableAttributes){
-            System.out.println(att.toString());
-        }
         defineFileData(attributePath, this.tableAttributes);
     }
 
@@ -34,7 +59,7 @@ public class DBTable extends DBObject implements DBTableObject {
         tablePath = createPath("tsv");
     }
 
-    public DBTable(String tableName, Database owningDatabase){
+    public DBTable(String tableName, DBDatabase owningDatabase){
         super(tableName);
         this.owningDatabase = owningDatabase;
         setTableFilePaths();
@@ -44,7 +69,6 @@ public class DBTable extends DBObject implements DBTableObject {
     }
 
     public void insertRow(TableRow newRow) throws DBException {
-        loadTableFile();
         newRow.addIdValue(tableRows.size() + 1);
         if (newRow.getSize() != getNumAttributes()){
             throw new DBInvalidValueWidthException("Number of values didn't match number of attributes.");
@@ -85,20 +109,20 @@ public class DBTable extends DBObject implements DBTableObject {
         return tableRows.size();
     }
 
-    public void createObject(){
+    public void createObject() throws DBException {
         this.createNewFile(tablePath);
         this.createNewFile(attributePath);
     }
 
-    public void dropObject(){
+    public void dropObject() throws DBException {
         File tableToDrop = new File(tablePath);
         File attributesToDrop = new File(attributePath);
         try{
             if (!tableToDrop.delete()){
-                System.out.println("Could not delete table file");
+                throw new DBServerException("Could not delete table. Does it exist?");
             }
             if (!attributesToDrop.delete()){
-                System.out.println("Could not delete attribute file");
+                throw new DBServerException("Could not delete attribute definitions. Does the table exist?");
             }
         }
         catch (SecurityException se){
@@ -106,10 +130,15 @@ public class DBTable extends DBObject implements DBTableObject {
         }
     }
 
-    public void createNewFile(String fileName){
+    @Override
+    public boolean dbObjectExists() {
+        return false;
+    }
+
+    public void createNewFile(String fileName) throws DBException {
         File fileToCreate = new File(fileName);
         if (fileToCreate.exists()){
-            System.out.println("throw error that file already exists");
+            throw new DBServerException("Table already exists.");
         }
         try {
             fileToCreate.createNewFile();
@@ -123,7 +152,6 @@ public class DBTable extends DBObject implements DBTableObject {
         loadAttributeFile();
         tableAttributes.add(attributeToAppend);
         defineFileData(attributePath, tableAttributes);
-        loadTableFile();
         for (TableRow row : tableRows){
             row.appendCell();
         }
@@ -132,7 +160,6 @@ public class DBTable extends DBObject implements DBTableObject {
 
     public void removeAttribute(TableAttribute attributeToRemove) throws DBException {
         loadAttributeFile();
-        loadTableFile();
         int i;
         boolean foundColumn = false;
         for (i = 0; i < tableAttributes.size(); i++){
@@ -168,7 +195,7 @@ public class DBTable extends DBObject implements DBTableObject {
             buffReader.close();
         }
         catch(IOException ioe){
-            System.out.println();
+            throw new DBServerException("Could not load attribute data.");
         }
     }
 
@@ -209,7 +236,7 @@ public class DBTable extends DBObject implements DBTableObject {
             }
         }
         catch(IOException ioe){
-            System.out.println();
+            throw new DBServerException("Could not load table definitions.");
         }
     }
 
@@ -218,7 +245,7 @@ public class DBTable extends DBObject implements DBTableObject {
     }
 
     public void updateTable(NameValueList updateNameValues) throws DBException {
-        ArrayList<TableRow> rowsToChange = tableRows;
+        ArrayList<TableRow> rowUpdates = new ArrayList<>(tableRows);
         tableRows.clear();
         loadTableFile();
         ArrayList<TableAttribute> attributesToUpdate = updateNameValues.getAttributesToChange();
@@ -227,8 +254,31 @@ public class DBTable extends DBObject implements DBTableObject {
             TableAttribute attribute = attributesToUpdate.get(i);
             int attributeIndex = getAttributeIndex(attribute.getObjectName());
             String valueToUse = valuesForUpdates.get(i);
-            for (TableRow row : tableRows){
+            for (TableRow row : rowUpdates){
                 row.updateValue(valueToUse, attributeIndex);
+            }
+        }
+        for (int i = 0; i < tableRows.size(); i++){
+            for (TableRow updatedRow : rowUpdates){
+                if (tableRows.get(i).getValue(0).equals(updatedRow.getValue(0))){
+                    tableRows.set(i, updatedRow);
+                }
+            }
+        }
+        defineFileData(tablePath, tableRows);
+    }
+
+    public void deleteRows() throws DBException {
+        ArrayList<TableRow> rowUpdates = new ArrayList<>(tableRows);
+        tableRows.clear();
+        loadTableFile();
+        for (int i = 0; i < tableRows.size(); i++){
+            for (TableRow updateRow : rowUpdates){
+                String rowId = tableRows.get(i).getValue(0);
+                if (rowId.equals(updateRow.getValue(0))){
+                    tableRows.remove(i);
+                    i--;
+                }
             }
         }
         defineFileData(tablePath, tableRows);
@@ -253,7 +303,6 @@ public class DBTable extends DBObject implements DBTableObject {
             }
             returnString.append(System.lineSeparator());
         }
-        //System.out.println(returnString);
         return returnString.toString();
     }
 
@@ -262,6 +311,30 @@ public class DBTable extends DBObject implements DBTableObject {
             loadAttributeFile();
         }
         return printTable(tableAttributes);
+    }
+
+    public String joinTables(DBTable tableToJoin) throws DBException {
+        ArrayList<TableRow> joiningRows = tableToJoin.getTableRows();
+        ArrayList<TableAttribute> secondaryAttributes = tableToJoin.getTableAttributes();
+        TableAttribute secondaryKey = tableToJoin.getJoinAttribute();
+        int primaryIndex = getAttributeIndex(joinAttribute.getObjectName());
+        int secondaryIndex = tableToJoin.getAttributeIndex(secondaryKey.getObjectName());
+        //get all columns
+        for (TableAttribute attribute : secondaryAttributes){
+            tableAttributes.add(attribute);
+        }
+        for (int i = 0; i < tableRows.size(); i++){
+            TableRow primaryRow = tableRows.get(i);
+            String primaryValue = primaryRow.getValue(primaryIndex);
+            for (int j = 0; i < joiningRows.size(); i++){
+                TableRow secondaryRow = joiningRows.get(j);
+                String secondaryValue = secondaryRow.getValue(secondaryIndex);
+                if (primaryValue.equals(secondaryValue)){
+                    primaryRow.appendRow(secondaryRow);
+                }
+            }
+        }
+        return printTable();
     }
 
     public static void test() {

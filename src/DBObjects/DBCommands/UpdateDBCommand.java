@@ -5,16 +5,13 @@ import DBObjects.DBCommands.CommandLists.CommandCondition;
 import DBObjects.DBCommands.CommandLists.NameValueList;
 import DBObjects.DBTable;
 
-import javax.print.attribute.standard.NumberOfInterveningJobs;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class UpdateDBCommand extends DBCommand {
 
     String nameValueString;
-    DBTable tableToUpdate;
     NameValueList updateNameValues;
     CommandCondition updateConditions;
 
@@ -39,6 +36,7 @@ public class UpdateDBCommand extends DBCommand {
     public void prepareCommand() throws DBException {
         int currentToken = 0;
         String tableName = getNextToken(tokenizedCommand, currentToken++);
+        //Configured in DBCommand parent class
         setupTable(tableName);
         String setString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
         if (!setString.equals("SET")){
@@ -61,20 +59,6 @@ public class UpdateDBCommand extends DBCommand {
         }
     }
 
-    private void setupTable(String tableName) throws DBException {
-        if (tableName.length() == 0){
-            throw new InvalidCommandArgumentException("No table name was provided."); //is this possible?
-        }
-        if (!isNameValid(tableName)){
-            throw new InvalidCommandArgumentException("Table name contained unexpected characters.");
-        }
-        if (workingDatabase == null){
-            throw new NotUsingDBException("No working database has been selected.");
-        }
-        tableToUpdate = new DBTable(tableName, workingDatabase);
-        tableToUpdate.loadTableFile();
-    }
-
     public void prepareNameValues() throws DBException {
         updateNameValues = new NameValueList(nameValueString);
         updateNameValues.parseList();
@@ -90,12 +74,12 @@ public class UpdateDBCommand extends DBCommand {
 
     @Override
     public void executeCommand() throws DBException {
-        updateConditions.executeConditions(tableToUpdate);
-        tableToUpdate.updateTable(updateNameValues);
+        updateConditions.executeConditions(tableForCommand);
+        tableForCommand.updateTable(updateNameValues);
     }
 
     @Override
-    public String[] splitCommand(String commandString) throws DBException {
+    public String[] splitCommand(String commandString) {
         //get the NameValueList
         Pattern nameValuePattern = Pattern.compile("(?<=\\sset)\\s+.*\\s+(?=where\\s)", Pattern.CASE_INSENSITIVE);
         Matcher nameValueMatcher = nameValuePattern.matcher(commandString);
@@ -103,13 +87,5 @@ public class UpdateDBCommand extends DBCommand {
         nameValueString = nameValueMatcher.group();
         commandString = commandString.replaceFirst(nameValueMatcher.pattern().pattern(), " ");
         return commandString.split("\\s+");
-    }
-
-    @Override
-    public String getNextToken(String[] tokenAry, int index) throws DBException {
-        if (index >= tokenAry.length){
-            throw new InvalidCommandArgumentException("Update command was missing the correct number of arguments.");
-        }
-        return tokenAry[index];
     }
 }

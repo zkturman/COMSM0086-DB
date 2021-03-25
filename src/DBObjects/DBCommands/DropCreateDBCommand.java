@@ -3,7 +3,7 @@ package DBObjects.DBCommands;
 import DBException.*;
 import DBObjects.DBObject;
 import DBObjects.DBTable;
-import DBObjects.Database;
+import DBObjects.DBDatabase;
 
 public abstract class DropCreateDBCommand extends DBCommand {
     DBObject objectToChange;
@@ -36,7 +36,7 @@ public abstract class DropCreateDBCommand extends DBCommand {
 
     public DBObject initDBObject(StructureType type, String objectName) throws DBException {
         if (type == StructureType.DATABASE){
-            return new Database(objectName);
+            return new DBDatabase(objectName);
         }
         else if (type == StructureType.TABLE){
             if (workingDatabase == null){
@@ -48,18 +48,6 @@ public abstract class DropCreateDBCommand extends DBCommand {
         else {
             throw new InvalidCommandArgumentException("No appropriate structure type is specified.");
         }
-    }
-
-    //can probably move this to command
-    public String[] splitCommand(String commandString) throws DBException {
-        return commandString.split("\\s+");
-    }
-
-    public String getNextToken(String[] tokenAry, int index) throws DBException{
-        if (index > tokenAry.length - 1){
-            throw new InvalidCommandArgumentException("Command expected more arguments.");
-        }
-        return tokenAry[index];
     }
 
     public abstract void setupListVars(String[] commandArgs) throws DBException;

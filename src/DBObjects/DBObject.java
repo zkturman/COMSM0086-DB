@@ -1,5 +1,7 @@
 package DBObjects;
 
+import DBException.DBException;
+
 public abstract class DBObject {
     String objectName;
 
@@ -14,11 +16,7 @@ public abstract class DBObject {
     public boolean isNameValid(String objectName) {
         return objectName.matches(".+[a-zA-Z0-9]");
     }
-    public void createObject(){
-        System.out.println("we're trying to create the parent DBObject");
-    }
-    public void dropObject() { System.out.println("we're trying to drop the parent DBObject");}
-    public boolean dbObjectExists(){
-        return false;
-    }
+    public void createObject() throws DBException {};
+    public void dropObject() throws  DBException {};
+    public boolean dbObjectExists(){return false;};
 }

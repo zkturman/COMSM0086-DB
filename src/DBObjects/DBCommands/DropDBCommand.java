@@ -2,9 +2,6 @@ package DBObjects.DBCommands;
 
 import DBException.DBException;
 import DBException.InvalidCommandArgumentException;
-import DBObjects.*;
-
-import java.util.Arrays;
 
 public class DropDBCommand extends DropCreateDBCommand {
 

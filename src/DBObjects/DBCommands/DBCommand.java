@@ -1,5 +1,4 @@
 package DBObjects.DBCommands;
-import DBException.DBObjectDoesNotExistException;
 import DBObjects.*;
 import DBException.*;
 
@@ -10,18 +9,19 @@ public abstract class DBCommand extends DBObject {
     public String[] tokenizedCommand;
     public String listString;
     protected StructureType structureType;
-    Database workingDatabase;
+    DBDatabase workingDatabase;
     protected String returnMessage;
+    DBTable tableForCommand;
 
     public String getReturnMessage() {
         return returnMessage;
     }
 
-    public Database getWorkingDatabase() {
+    public DBDatabase getWorkingDatabase() {
         return workingDatabase;
     }
 
-    public void setWorkingDatabase(Database dbToSet){
+    public void setWorkingDatabase(DBDatabase dbToSet){
         workingDatabase = dbToSet;
     }
 
@@ -65,20 +65,21 @@ public abstract class DBCommand extends DBObject {
             case "UPDATE":
                 return new UpdateDBCommand(commandArgs);
             case "DELETE":
+                return new DeleteDBCommand(commandArgs);
             case "JOIN":
             default:
                 throw new DBInvalidCommandException("An invalid command was entered.");
         }
     }
 
-    public boolean processCommand(Database currentDB) throws DBException{
+    public boolean processCommand(DBDatabase currentDB) throws DBException{
         workingDatabase = currentDB;
         prepareCommand();
         executeCommand();
         return true;
     }
 
-    public void determineStructureType(String specifiedType, Database currentDB) throws DBException {
+    public void determineStructureType(String specifiedType, DBDatabase currentDB) throws DBException {
         specifiedType = specifiedType.toUpperCase();
         switch (specifiedType){
             case "TABLE":
@@ -95,6 +96,20 @@ public abstract class DBCommand extends DBObject {
         }
     }
 
+    public void setupTable(String tableName) throws DBException {
+        if (tableName.length() == 0) {
+            throw new InvalidCommandArgumentException("No table name provided.");
+        }
+        if (!isNameValid(tableName)) {
+            throw new InvalidCommandArgumentException("Table name was invalid.");
+        }
+        if (workingDatabase == null){
+            throw new NotUsingDBException("No working database has been selected.");
+        }
+        tableForCommand = new DBTable(tableName, workingDatabase);
+        tableForCommand.loadTableFile();
+    }
+
     public boolean commandHasArguments(String[] commandAry) throws DBException{
         if (commandAry.length < 1) {
             throw new InvalidCommandArgumentException("Command has no arguments.");
@@ -104,10 +119,19 @@ public abstract class DBCommand extends DBObject {
 
     public abstract void prepareCommand() throws DBException;
     public abstract void executeCommand() throws DBException;
-    public abstract String[] splitCommand(String commandString) throws DBException;
-    public abstract String getNextToken(String[] tokenAry, int index) throws DBException;
 
-    public String[] removeCommandName(String[] tokenizedCommand) {
+    protected String[] splitCommand(String commandString) throws DBException {
+        return commandString.split("\\s+");
+    }
+
+    protected String getNextToken(String[] tokenAry, int index) throws DBException{
+        if (index > tokenAry.length - 1){
+            throw new InvalidCommandArgumentException("Command has an inappropriate number of arguments.");
+        }
+        return tokenAry[index];
+    }
+
+    protected String[] removeCommandName(String[] tokenizedCommand) {
         int startIndex = 1;
         if (tokenizedCommand[0].equals("")){
             startIndex = 2;

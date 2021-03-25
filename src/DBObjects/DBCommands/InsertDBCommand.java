@@ -9,7 +9,6 @@ import java.util.Locale;
 
 public class InsertDBCommand extends DBCommand {
 
-    DBTable tableToInsert;
     ValueList valuesToInsert;
 
     public InsertDBCommand(String[] insertArgs) throws DBException{
@@ -36,6 +35,7 @@ public class InsertDBCommand extends DBCommand {
             throw new InvalidCommandArgumentException("Expected \"INTO\" string in insert command.");
         }
         String tableName = getNextToken(tokenizedCommand, currentToken++);
+        //Configured in DBCommand parent class
         setupTable(tableName);
         String valuesString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
         if (!valuesString.equals("VALUES")){
@@ -47,19 +47,6 @@ public class InsertDBCommand extends DBCommand {
         prepareValueList(listString);
     }
 
-    public void setupTable(String tableName)throws DBException {
-        if (tableName.length() == 0) {
-            throw new InvalidCommandArgumentException("No table name provided.");
-        }
-        if (!isNameValid(tableName)) {
-            throw new InvalidCommandArgumentException("Table name was invalid.");
-        }
-        if (workingDatabase == null){
-            throw new NotUsingDBException("No working database has been selected.");
-        }
-        tableToInsert = new DBTable(tableName, workingDatabase);
-    }
-
     public void prepareValueList(String valueList) throws DBException {
         valuesToInsert = new ValueList(valueList);
         if (!valuesToInsert.parseList()){
@@ -68,19 +55,6 @@ public class InsertDBCommand extends DBCommand {
     }
 
     public void executeCommand() throws DBException {
-        tableToInsert.insertRow(valuesToInsert.getValueList());
-    }
-
-    @Override
-    public String[] splitCommand(String commandString) throws DBException {
-        return commandString.split("\\s+");
-    }
-
-    @Override
-    public String getNextToken(String[] tokenAry, int index) throws DBException {
-        if (index > tokenAry.length){
-            throw new InvalidCommandArgumentException("Insert command is incomplete.");
-        }
-        return tokenAry[index];
+        tableForCommand.insertRow(valuesToInsert.getValueList());
     }
 }

@@ -48,6 +48,12 @@ public class TableRow extends DBObject implements DBTableObject {
         rowData.add("\'\'");
     }
 
+    public void appendRow(TableRow rowToAppend){
+        for (int i = 0; i < rowToAppend.getSize(); i++){
+            rowData.add(rowToAppend.getValue(i));
+        }
+    }
+
     public void removeValue(int index){
         rowData.remove(index);
     }

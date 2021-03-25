@@ -5,7 +5,7 @@ import java.io.*;
 import java.net.*;
 
 public class DBServer {
-        Database workingDatabase = null;
+        DBDatabase workingDatabase = null;
         public DBServer(int portNumber)
         {
             try {
@@ -35,15 +35,16 @@ public class DBServer {
 
         private void processNextCommand(BufferedReader socketReader, BufferedWriter socketWriter) throws IOException, NullPointerException
         {
-            if (workingDatabase != null){
-                socketWriter.write("Current database " + workingDatabase.getObjectName() + '\n');
-            }
             String incomingCommand = socketReader.readLine();
             System.out.println("Received message: " + incomingCommand);
             DBStatement dbStatement = new DBStatement(workingDatabase);
             try{
                 dbStatement.performStatement(incomingCommand);
-                socketWriter.write("[OK] Processed: " + incomingCommand);
+                socketWriter.write("[OK] Processed: " + incomingCommand + System.lineSeparator());
+                String returnMessage = dbStatement.getReturnMessage();
+                if (returnMessage != null){
+                    socketWriter.write(returnMessage);
+                }
             }
             catch(DBException de){
                 socketWriter.write("[ERROR] " + de.toString());

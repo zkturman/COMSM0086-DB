@@ -1,10 +1,16 @@
 package DBObjects.DBCommands;
 
 import DBException.*;
+import DBObjects.DBTable;
+import DBObjects.TableAttribute;
 
 import java.util.Arrays;
 
 public class JoinDBCommand extends DBCommand {
+
+    DBTable tableToJoin;
+    TableAttribute primaryAttribute;
+    TableAttribute secondaryAttribute;
 
     protected JoinDBCommand(String[] joinArgs) throws DBException {
         super(joinArgs);
@@ -20,31 +26,67 @@ public class JoinDBCommand extends DBCommand {
     }
     @Override
     public void prepareCommand() throws DBException {
-        String tableName1;
-        String andString;
-        String tableName2;
-        String onString;
-        String attributeString1;
-        String andString2;
-        String attributeString2;
+        int currentToken = 0;
+        String primaryTable = getNextToken(tokenizedCommand, currentToken++);
+        setupTable(primaryTable, DBJoinTableType.PRIMARY);
+        String tableAndString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
+        if (!tableAndString.equals("AND")){
+            throw new InvalidCommandArgumentException("Expected \"AND\" string between tables in join command.");
+        }
+        String secondaryTable = getNextToken(tokenizedCommand, currentToken++);
+        setupTable(secondaryTable, DBJoinTableType.SECONDARY);
+        String onString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
+        if (!onString.equals("ON")){
+            throw new InvalidCommandArgumentException("Expected \"ON\" string in join command.");
+        }
+        String primaryAttributeString = getNextToken(tokenizedCommand, currentToken++);
+        if (!isNameValid(primaryAttributeString)){
+            throw new InvalidCommandArgumentException("Primary attribute name was not valid.");
+        }
+        primaryAttribute = new TableAttribute(primaryAttributeString);
+        String attributeAndString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
+        if (!attributeAndString.equals("AND")){
+            throw new InvalidCommandArgumentException("Expected \"AND\" string between attributes in join command.");
+        }
+        String secondaryAttributeString = getNextToken(tokenizedCommand,currentToken++);
+        if (!isNameValid(secondaryAttributeString)){
+            throw new InvalidCommandArgumentException("Secondary attribute name was not valid.");
+        }
+        secondaryAttribute = new TableAttribute(secondaryAttributeString);
+        if (currentToken != tokenizedCommand.length){
+            throw new InvalidCommandArgumentException("Join command was not the expected number of arguments.");
+        }
+    }
+
+    public void setupTable(String tableName, DBJoinTableType type) throws DBException {
+        if (type == DBJoinTableType.PRIMARY){
+            super.setupTable(tableName);
+        }
+        else {
+            if (tableName.length() == 0) {
+                throw new InvalidCommandArgumentException("No table name provided.");
+            }
+            if (!isNameValid(tableName)) {
+                throw new InvalidCommandArgumentException("Table name was invalid.");
+            }
+            if (workingDatabase == null) {
+                throw new NotUsingDBException("No working database has been selected.");
+            }
+            tableToJoin = new DBTable(tableName, workingDatabase);
+            tableToJoin.loadTableFile();
+        }
+        tableForCommand.setJoinAttribute(primaryAttribute);
+        tableToJoin.setJoinAttribute(secondaryAttribute);
     }
 
     @Override
     public void executeCommand() throws DBException {
-
+        returnMessage = tableForCommand.joinTables(tableToJoin);
     }
 
     @Override
-    public String[] splitCommand(String commandString) throws DBException {
+    public String[] splitCommand(String commandString) {
         return commandString.split("\\s+");
-    }
-
-    @Override
-    public String getNextToken(String[] tokenAry, int index) throws DBException {
-        if (index > tokenAry.length){
-            throw new InvalidCommandArgumentException("Join has the incorrect number of arguments.");
-        }
-        return tokenAry[index];
     }
 
     @Override

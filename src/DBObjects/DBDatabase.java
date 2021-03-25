@@ -1,19 +1,20 @@
 package DBObjects;
-import java.io.*;
-import java.util.List;
+import DBException.DBException;
+import DBException.DBServerException;
 
-public class Database extends DBObject{
-    public Database(String databaseName){
+import java.io.*;
+
+public class DBDatabase extends DBObject{
+    public DBDatabase(String databaseName){
         super(databaseName);
     }
 
-    public void createObject(){
-        System.out.println("we're trying to create a database");
+    public void createObject() throws DBException {
         //try here for nullpointerexecption
         File dbToCreate = new File(objectName);
         try {
             if (!dbToCreate.mkdir()) {
-                System.out.println("Failed to create database");
+                throw new DBServerException("Failed to create database");
             }
         }
         catch(SecurityException se){
@@ -21,18 +22,19 @@ public class Database extends DBObject{
         }
     }
 
-    public void dropObject(){
-        System.out.println("we're trying to drop a database");
+    public void dropObject() throws DBException {
         File dbToDrop = new File(objectName);
         File[] tablesToDrop = dbToDrop.listFiles();
         try{
-            for(int i = 0; i < tablesToDrop.length; i++){
-                if (!tablesToDrop[i].delete()){
-                    System.out.println("Failed to drop database tables");
+            if (tablesToDrop != null) {
+                for (int i = 0; i < tablesToDrop.length; i++) {
+                    if (!tablesToDrop[i].delete()) {
+                        throw new DBServerException("Failed to drop table in database.");
+                    }
                 }
             }
             if (!dbToDrop.delete()){
-                System.out.println("Failed to drop database");
+                throw new DBServerException("Failed to delete database.");
             }
         }
         catch (SecurityException se){

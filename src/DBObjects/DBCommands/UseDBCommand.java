@@ -3,12 +3,10 @@ package DBObjects.DBCommands;
 import DBException.DBObjectDoesNotExistException;
 import DBException.DBException;
 import DBException.InvalidCommandArgumentException;
-import DBObjects.Database;
-
-import java.util.Arrays;
+import DBObjects.DBDatabase;
 
 public class UseDBCommand extends DBCommand {
-    Database databaseToUse;
+    DBDatabase databaseToUse;
 
     public UseDBCommand(String[] commandArgs) throws DBException{
         if (commandArgs.length != 1){
@@ -24,7 +22,7 @@ public class UseDBCommand extends DBCommand {
         if (!isNameValid(databaseName)){
             throw new InvalidCommandArgumentException("Database did not have a valid name.");
         }
-        databaseToUse = new Database(databaseName);
+        databaseToUse = new DBDatabase(databaseName);
     }
     public void executeCommand() throws DBException {
         if (!databaseToUse.dbObjectExists()){
@@ -32,18 +30,6 @@ public class UseDBCommand extends DBCommand {
         }
         //databaseToUse.loadTables
         workingDatabase = databaseToUse;
-    }
-
-    public String[] splitCommand(String commandString){
-        return commandString.split("\\s+");
-    }
-
-    @Override
-    public String getNextToken(String[] tokenAry, int index) throws DBException {
-        if (index > tokenAry.length){
-            throw new InvalidCommandArgumentException("Command did not have the correct number of arguments.");
-        }
-        return tokenAry[index];
     }
 
     public static void test(){
