@@ -273,8 +273,8 @@ public class DBTable extends DBObject implements DBTableObject {
         tableRows.clear();
         loadTableFile();
         for (int i = 0; i < tableRows.size(); i++){
+            String rowId = tableRows.get(i).getValue(0);
             for (TableRow updateRow : rowUpdates){
-                String rowId = tableRows.get(i).getValue(0);
                 if (rowId.equals(updateRow.getValue(0))){
                     tableRows.remove(i);
                     i--;
@@ -319,22 +319,28 @@ public class DBTable extends DBObject implements DBTableObject {
         TableAttribute secondaryKey = tableToJoin.getJoinAttribute();
         int primaryIndex = getAttributeIndex(joinAttribute.getObjectName());
         int secondaryIndex = tableToJoin.getAttributeIndex(secondaryKey.getObjectName());
-        //get all columns
-        for (TableAttribute attribute : secondaryAttributes){
-            tableAttributes.add(attribute);
+        StringBuilder joinedTable = new StringBuilder();
+        for (TableAttribute att : tableAttributes){
+            joinedTable.append(att.toString()).append("\t");
         }
+        for (TableAttribute att : secondaryAttributes){
+            joinedTable.append(att.toString()).append("\t");
+        }
+        joinedTable.append(System.lineSeparator());
         for (int i = 0; i < tableRows.size(); i++){
             TableRow primaryRow = tableRows.get(i);
             String primaryValue = primaryRow.getValue(primaryIndex);
-            for (int j = 0; i < joiningRows.size(); i++){
+            for (int j = 0; j < joiningRows.size(); j++){
                 TableRow secondaryRow = joiningRows.get(j);
                 String secondaryValue = secondaryRow.getValue(secondaryIndex);
                 if (primaryValue.equals(secondaryValue)){
-                    primaryRow.appendRow(secondaryRow);
+                    joinedTable.append(primaryRow.toString());
+                    joinedTable.append(secondaryRow.toString());
+                    joinedTable.append(System.lineSeparator());
                 }
             }
         }
-        return printTable();
+        return joinedTable.toString();
     }
 
     public static void test() {

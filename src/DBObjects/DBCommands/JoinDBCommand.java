@@ -44,6 +44,7 @@ public class JoinDBCommand extends DBCommand {
             throw new InvalidCommandArgumentException("Primary attribute name was not valid.");
         }
         primaryAttribute = new TableAttribute(primaryAttributeString);
+        tableForCommand.setJoinAttribute(primaryAttribute);
         String attributeAndString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
         if (!attributeAndString.equals("AND")){
             throw new InvalidCommandArgumentException("Expected \"AND\" string between attributes in join command.");
@@ -53,6 +54,7 @@ public class JoinDBCommand extends DBCommand {
             throw new InvalidCommandArgumentException("Secondary attribute name was not valid.");
         }
         secondaryAttribute = new TableAttribute(secondaryAttributeString);
+        tableToJoin.setJoinAttribute(secondaryAttribute);
         if (currentToken != tokenizedCommand.length){
             throw new InvalidCommandArgumentException("Join command was not the expected number of arguments.");
         }
@@ -75,8 +77,6 @@ public class JoinDBCommand extends DBCommand {
             tableToJoin = new DBTable(tableName, workingDatabase);
             tableToJoin.loadTableFile();
         }
-        tableForCommand.setJoinAttribute(primaryAttribute);
-        tableToJoin.setJoinAttribute(secondaryAttribute);
     }
 
     @Override

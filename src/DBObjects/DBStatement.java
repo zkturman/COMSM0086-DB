@@ -11,22 +11,33 @@ public class DBStatement {
     private String returnMessage;
     private String[] commandToProcess;
 
+    /**
+     * Returns the current working database. USE command can update this.
+     * @return
+     */
     public DBDatabase getWorkingDatabase() {
         return workingDatabase;
     }
 
-    public void setWorkingDatabase(DBDatabase workingDatabase) {
-        this.workingDatabase = workingDatabase;
-    }
-
+    /**
+     * Returns any messages created from the database query.
+     * @return Message generated from SQL query.
+     */
     public String getReturnMessage() {
         return returnMessage;
     }
+
 
     public DBStatement(DBDatabase workingDatabase){
         this.workingDatabase = workingDatabase;
     }
 
+    /**
+     * Performs a SQL query and generates parsing errors. Evaluates queries differently depending on
+     * the initial command (i.e. the first token).
+     * @param commandString SQL query to perform.
+     * @throws DBException Thrown if an error is encounter when parsing a SQL query.
+     */
     public void performStatement(String commandString) throws DBException {
         commandString = removeSemicolon(commandString);
         commandToProcess = separateLists(commandString);
@@ -45,10 +56,12 @@ public class DBStatement {
      * @param mainCommand SQL query to evaluate.
      * @return The first word in a strings without spaces.
      */
-    private String getFirstToken(String mainCommand){
-        Pattern tokenPattern = Pattern.compile("\\s*[a-zA-Z0-9]+(\\s+|\\*)", Pattern.CASE_INSENSITIVE);
+    private String getFirstToken(String mainCommand) throws DBException {
+        Pattern tokenPattern = Pattern.compile("\\s*[a-zA-Z0-9]+(\\s+|(?=\\*))", Pattern.CASE_INSENSITIVE);
         Matcher tokenMatcher = tokenPattern.matcher(mainCommand);
-        tokenMatcher.find();
+        if (!tokenMatcher.find()){
+            throw new DBInvalidCommandException("An incorrect command was attempted.");
+        }
         String commandName = tokenMatcher.group();
         commandName = commandName.replaceAll("\\s", "");
         return commandName;

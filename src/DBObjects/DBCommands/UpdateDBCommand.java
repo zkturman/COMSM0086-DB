@@ -48,7 +48,7 @@ public class UpdateDBCommand extends DBCommand {
             throw new InvalidCommandArgumentException("Expected \"WHERE\" string in select command.");
         }
         if (currentToken != tokenizedCommand.length && listString == null){
-            listString = commandString.split("\\s+where\\s+")[1];
+            listString = commandString.split("(?i)\\s+where\\s+")[1];
             tokenizedCommand = Arrays.copyOfRange(tokenizedCommand, 0, currentToken);
         }
         if (currentToken == tokenizedCommand.length && listString != null) {
@@ -58,6 +58,7 @@ public class UpdateDBCommand extends DBCommand {
             throw new InvalidCommandArgumentException("Update conditions were of the incorrect form.");
         }
     }
+
 
     public void prepareNameValues() throws DBException {
         updateNameValues = new NameValueList(nameValueString);

@@ -38,7 +38,7 @@ public class DBDatabase extends DBObject{
             }
         }
         catch (SecurityException se){
-            se.printStackTrace();
+            throw new DBServerException("Failed to delete database.");
         }
     }
 

@@ -67,6 +67,7 @@ public abstract class DBCommand extends DBObject {
             case "DELETE":
                 return new DeleteDBCommand(commandArgs);
             case "JOIN":
+                return new JoinDBCommand(commandArgs);
             default:
                 throw new DBInvalidCommandException("An invalid command was entered.");
         }
