@@ -3,7 +3,6 @@ package DBObjects.DBCommands;
 import DBException.*;
 import DBObjects.DBCommands.CommandLists.CommandCondition;
 import DBObjects.DBCommands.CommandLists.NameValueList;
-import DBObjects.DBTable;
 
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -16,8 +15,7 @@ public class UpdateDBCommand extends DBCommand {
     CommandCondition updateConditions;
 
     protected UpdateDBCommand(String[] updateArgs) throws DBException{
-        super(updateArgs);
-        if (!commandHasArguments(updateArgs)){
+        if (isEmptyCommand(updateArgs)){
             throw new InvalidCommandArgumentException("Update command has no arguments.");
         }
         commandString = updateArgs[0];

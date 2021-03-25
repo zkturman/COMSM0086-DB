@@ -3,6 +3,7 @@ import DBException.DBException;
 import DBException.DBServerException;
 
 import java.io.*;
+import java.nio.file.Files;
 
 public class DBDatabase extends DBObject{
     public DBDatabase(String databaseName){
@@ -29,7 +30,8 @@ public class DBDatabase extends DBObject{
             if (tablesToDrop != null) {
                 for (int i = 0; i < tablesToDrop.length; i++) {
                     if (!tablesToDrop[i].delete()) {
-                        throw new DBServerException("Failed to drop table in database.");
+                        throw new IOException();
+                        //throw new DBServerException("Failed to drop table in database.");
                     }
                 }
             }
@@ -39,6 +41,10 @@ public class DBDatabase extends DBObject{
         }
         catch (SecurityException se){
             throw new DBServerException("Failed to delete database.");
+        }
+        catch (IOException ioe){
+            ioe.getCause();
+            ioe.printStackTrace();
         }
     }
 

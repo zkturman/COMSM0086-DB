@@ -1,13 +1,8 @@
 package DBObjects.DBCommands;
 
 import DBException.*;
-import DBObjects.*;
 import DBObjects.DBCommands.CommandLists.*;
 
-import javax.xml.crypto.Data;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,8 +13,7 @@ public class SelectDBCommand extends DBCommand{
     CommandCondition selectConditions;
 
     public SelectDBCommand(String[] selectArgs) throws DBException{
-        super(selectArgs);
-        if (!commandHasArguments(selectArgs)){
+        if (isEmptyCommand(selectArgs)){
             throw new InvalidCommandArgumentException("Select command has no arguments.");
         }
         if (selectArgs.length > 2){

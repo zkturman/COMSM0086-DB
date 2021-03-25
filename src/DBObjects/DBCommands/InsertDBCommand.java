@@ -2,18 +2,13 @@ package DBObjects.DBCommands;
 
 import DBException.*;
 import DBObjects.DBCommands.CommandLists.ValueList;
-import DBObjects.DBTable;
-
-import java.util.Arrays;
-import java.util.Locale;
 
 public class InsertDBCommand extends DBCommand {
 
     ValueList valuesToInsert;
 
     public InsertDBCommand(String[] insertArgs) throws DBException{
-        super(insertArgs);
-        if (!commandHasArguments(insertArgs)){
+        if (isEmptyCommand(insertArgs)){
             throw new InvalidCommandArgumentException("Insert command has no arguments.");
         }
         commandString = insertArgs[0];

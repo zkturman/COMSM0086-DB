@@ -2,19 +2,15 @@ package DBObjects.DBCommands;
 
 import DBException.*;
 import DBObjects.DBCommands.CommandLists.CommandCondition;
-import DBObjects.DBTable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Locale;
 
 public class DeleteDBCommand extends DBCommand {
 
     CommandCondition deleteConditions;
 
     public DeleteDBCommand(String[] deleteArgs) throws DBException {
-        super(deleteArgs);
-        if (!commandHasArguments(deleteArgs)){
+        if (isEmptyCommand(deleteArgs)){
             throw new InvalidCommandArgumentException("Delete command has no arguments.");
         }
         commandString = deleteArgs[0];

@@ -5,13 +5,13 @@ import DBException.*;
 import java.util.Arrays;
 
 public abstract class DBCommand extends DBObject {
-    public String commandString;
-    public String[] tokenizedCommand;
-    public String listString;
+    protected String commandString;
+    protected String[] tokenizedCommand;
+    protected String listString;
     protected StructureType structureType;
-    DBDatabase workingDatabase;
+    protected DBDatabase workingDatabase;
     protected String returnMessage;
-    DBTable tableForCommand;
+    protected DBTable tableForCommand;
 
     public String getReturnMessage() {
         return returnMessage;
@@ -21,13 +21,7 @@ public abstract class DBCommand extends DBObject {
         return workingDatabase;
     }
 
-    public void setWorkingDatabase(DBDatabase dbToSet){
-        workingDatabase = dbToSet;
-    }
-
     protected  DBCommand(){}
-
-    public DBCommand(String[] commandArray) throws DBException{}
 
     public static boolean isValidCommand(String commandName){
         String commandType = commandName.toUpperCase();
@@ -73,14 +67,20 @@ public abstract class DBCommand extends DBObject {
         }
     }
 
-    public boolean processCommand(DBDatabase currentDB) throws DBException{
+    public void processCommand(DBDatabase currentDB) throws DBException {
         workingDatabase = currentDB;
         prepareCommand();
         executeCommand();
-        return true;
     }
 
-    public void determineStructureType(String specifiedType, DBDatabase currentDB) throws DBException {
+    /**
+     * Determines and updates the structure type of a command based on the type specified in the query.
+     * @param specifiedType Structure specified in the database query.
+     * @param currentDB The current working database. Working database is required if TABLE is specified.
+     * @throws DBException Thrown if an invalid structure is specified or table is specified
+     * and no working database is specified.
+     */
+    protected void determineStructureType(String specifiedType, DBDatabase currentDB) throws DBException {
         specifiedType = specifiedType.toUpperCase();
         switch (specifiedType){
             case "TABLE":
@@ -111,15 +111,12 @@ public abstract class DBCommand extends DBObject {
         tableForCommand.loadTableFile();
     }
 
-    public boolean commandHasArguments(String[] commandAry) throws DBException{
+    public boolean isEmptyCommand(String[] commandAry) throws DBException{
         if (commandAry.length < 1) {
             throw new InvalidCommandArgumentException("Command has no arguments.");
         }
-        return true;
+        return false;
     }
-
-    public abstract void prepareCommand() throws DBException;
-    public abstract void executeCommand() throws DBException;
 
     protected String[] splitCommand(String commandString) throws DBException {
         return commandString.split("\\s+");
@@ -139,6 +136,9 @@ public abstract class DBCommand extends DBObject {
         }
         return Arrays.copyOfRange(tokenizedCommand, startIndex, tokenizedCommand.length);
     }
+
+    public abstract void prepareCommand() throws DBException;
+    public abstract void executeCommand() throws DBException;
 
     public static void test(){
     }

@@ -16,7 +16,7 @@ public abstract class DBObject {
     public boolean isNameValid(String objectName) {
         return objectName.matches(".+[a-zA-Z0-9]");
     }
-    public void createObject() throws DBException {};
-    public void dropObject() throws  DBException {};
-    public boolean dbObjectExists(){return false;};
+    public void createObject() throws DBException {}
+    public void dropObject() throws  DBException {}
+    public boolean dbObjectExists(){return false;}
 }

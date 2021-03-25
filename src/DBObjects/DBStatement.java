@@ -7,13 +7,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DBStatement {
-    private DBDatabase workingDatabase = null;
+    private DBDatabase workingDatabase;
     private String returnMessage;
-    private String[] commandToProcess;
 
     /**
      * Returns the current working database. USE command can update this.
-     * @return
+     * @return The working database object.
      */
     public DBDatabase getWorkingDatabase() {
         return workingDatabase;
@@ -39,8 +38,11 @@ public class DBStatement {
      * @throws DBException Thrown if an error is encounter when parsing a SQL query.
      */
     public void performStatement(String commandString) throws DBException {
+        if (commandString == null || commandString.length() == 0){
+            throw new DBInvalidCommandException("Command was empty.");
+        }
         commandString = removeSemicolon(commandString);
-        commandToProcess = separateLists(commandString);
+        String[] commandToProcess = separateLists(commandString);
         String firstToken = getFirstToken(commandToProcess[0]);
         if (!DBCommand.isValidCommand(firstToken)){
             throw new DBInvalidCommandException("An invalid command was entered: " + firstToken);
@@ -105,7 +107,7 @@ public class DBStatement {
             assert test1.getFirstToken(statement2).equals("insert");
         }
         catch (DBException de){
-
+            System.out.println("DBStatement threw an error during testing.");
         }
         System.out.println("DBStatement passed.");
     }

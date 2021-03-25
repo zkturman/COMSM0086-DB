@@ -4,6 +4,7 @@ import DBException.*;
 import DBObjects.DBCommands.CommandLists.NameValueList;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class DBTable extends DBObject implements DBTableObject {
@@ -63,9 +64,16 @@ public class DBTable extends DBObject implements DBTableObject {
         super(tableName);
         this.owningDatabase = owningDatabase;
         setTableFilePaths();
-        tableAttributes = new ArrayList<TableAttribute>();
+        tableAttributes = new ArrayList<>();
         tableAttributes.add(new TableAttribute("id"));
-        tableRows = new ArrayList<TableRow>();
+        tableRows = new ArrayList<>();
+    }
+
+    protected DBTable(String tableName){
+        super(tableName);
+        tableAttributes = new ArrayList<>();
+        tableAttributes.add(new TableAttribute("id"));
+        tableRows = new ArrayList<>();
     }
 
     public void insertRow(TableRow newRow) throws DBException {
@@ -234,6 +242,7 @@ public class DBTable extends DBObject implements DBTableObject {
                 tableRows.add(new TableRow(tableLine));
                 tableLine = buffReader.readLine();
             }
+            buffReader.close();
         }
         catch(IOException ioe){
             throw new DBServerException("Could not load table definitions.");
@@ -297,8 +306,8 @@ public class DBTable extends DBObject implements DBTableObject {
         }
         returnString.append(System.lineSeparator());
         for (TableRow row : tableRows){
-            for (int i = 0; i < customAttributes.size(); i++){
-                int attributeIndex = getAttributeIndex(customAttributes.get(i).getObjectName());
+            for (TableAttribute customAttribute : customAttributes) {
+                int attributeIndex = getAttributeIndex(customAttribute.getObjectName());
                 returnString.append(row.printValue(attributeIndex));
             }
             returnString.append(System.lineSeparator());
@@ -313,34 +322,69 @@ public class DBTable extends DBObject implements DBTableObject {
         return printTable(tableAttributes);
     }
 
-    public String joinTables(DBTable tableToJoin) throws DBException {
-        ArrayList<TableRow> joiningRows = tableToJoin.getTableRows();
-        ArrayList<TableAttribute> secondaryAttributes = tableToJoin.getTableAttributes();
-        TableAttribute secondaryKey = tableToJoin.getJoinAttribute();
-        int primaryIndex = getAttributeIndex(joinAttribute.getObjectName());
-        int secondaryIndex = tableToJoin.getAttributeIndex(secondaryKey.getObjectName());
-        StringBuilder joinedTable = new StringBuilder();
-        for (TableAttribute att : tableAttributes){
-            joinedTable.append(att.toString()).append("\t");
+    public static DBTable joinTables (DBTable primaryTable, DBTable secondaryTable) throws DBException {
+        DBTable jointTable = new DBTable("JointTable");
+        jointTable.populateJointAttributes(primaryTable);
+        jointTable.populateJointAttributes(secondaryTable);
+        jointTable.populateJointTableRows(primaryTable, secondaryTable);
+        return jointTable;
+    }
+
+    public void populateJointAttributes(DBTable joiningTable) throws DBException {
+        ArrayList<TableAttribute> joiningAttributes = joiningTable.getTableAttributes();
+
+        TableAttribute joinAttribute;
+        String jointAttributeName, attributeName;
+
+        for (TableAttribute attribute : joiningAttributes){
+            attributeName = attribute.getObjectName();
+            if (!attributeName.equals("id")) {
+                jointAttributeName = joiningTable.getObjectName() + "." + attributeName;
+                joinAttribute = new TableAttribute(jointAttributeName);
+                this.buildAttributes(joinAttribute);
+            }
         }
-        for (TableAttribute att : secondaryAttributes){
-            joinedTable.append(att.toString()).append("\t");
-        }
-        joinedTable.append(System.lineSeparator());
-        for (int i = 0; i < tableRows.size(); i++){
-            TableRow primaryRow = tableRows.get(i);
+    }
+
+    public void buildAttributes(TableAttribute attributeToAdd){
+        tableAttributes.add(attributeToAdd);
+    }
+
+    public void populateJointTableRows(DBTable primaryTable, DBTable joiningTable) throws DBException {
+        ArrayList<TableRow> primaryRows = primaryTable.getTableRows();
+        ArrayList<TableRow> secondaryRows = joiningTable.getTableRows();
+
+        TableAttribute primaryKey = primaryTable.getJoinAttribute();
+        TableAttribute secondaryKey = joiningTable.getJoinAttribute();
+
+        int primaryIndex = primaryTable.getAttributeIndex(primaryKey.getObjectName());
+        int secondaryIndex = joiningTable.getAttributeIndex(secondaryKey.getObjectName());
+        int jointIndex = 0;
+
+        for (TableRow primaryRow : primaryRows) {
             String primaryValue = primaryRow.getValue(primaryIndex);
-            for (int j = 0; j < joiningRows.size(); j++){
-                TableRow secondaryRow = joiningRows.get(j);
+            for (TableRow secondaryRow : secondaryRows) {
                 String secondaryValue = secondaryRow.getValue(secondaryIndex);
-                if (primaryValue.equals(secondaryValue)){
-                    joinedTable.append(primaryRow.toString());
-                    joinedTable.append(secondaryRow.toString());
-                    joinedTable.append(System.lineSeparator());
+                if (primaryValue.equals(secondaryValue)) {
+                    buildRows(primaryRow, jointIndex);
+                    buildRows(secondaryRow, jointIndex);
+                    jointIndex ++;
                 }
             }
         }
-        return joinedTable.toString();
+    }
+
+    public void buildRows(TableRow rowToAdd, int index){
+        if (index == tableRows.size()){
+            TableRow newRow = new TableRow();
+            newRow.addIdValue(index + 1);
+            tableRows.add(newRow);
+        }
+        TableRow partialRow = tableRows.get(index);
+        //start at 1 to exclude row ids
+        for (int i = 1; i < rowToAdd.getSize(); i++){
+            partialRow.buildCell(rowToAdd.getValue(i));
+        }
     }
 
     public static void test() {

@@ -3,14 +3,11 @@ package DBObjects.DBCommands;
 import DBException.*;
 import DBObjects.*;
 
-import java.util.Arrays;
-
 public class AlterDBCommand extends DBCommand {
     TableAttribute attributeToAlter;
     AlterType alterType;
     public AlterDBCommand(String[] alterArgs) throws DBException{
-        super(alterArgs);
-        if (!commandHasArguments(alterArgs)){
+        if (isEmptyCommand(alterArgs)){
             throw new InvalidCommandArgumentException("Alter command has no arguments");
         }
         commandString = alterArgs[0];

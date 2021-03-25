@@ -13,8 +13,7 @@ public class JoinDBCommand extends DBCommand {
     TableAttribute secondaryAttribute;
 
     protected JoinDBCommand(String[] joinArgs) throws DBException {
-        super(joinArgs);
-        if (!commandHasArguments(joinArgs)){
+        if (isEmptyCommand(joinArgs)){
             throw new InvalidCommandArgumentException("Join command has no arguments.");
         }
         if (joinArgs.length != 1){
@@ -81,7 +80,8 @@ public class JoinDBCommand extends DBCommand {
 
     @Override
     public void executeCommand() throws DBException {
-        returnMessage = tableForCommand.joinTables(tableToJoin);
+        DBTable jointTable = DBTable.joinTables(tableForCommand, tableToJoin);
+        returnMessage = jointTable.printTable();
     }
 
     @Override

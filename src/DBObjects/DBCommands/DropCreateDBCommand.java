@@ -10,7 +10,7 @@ public abstract class DropCreateDBCommand extends DBCommand {
 
 
     protected DropCreateDBCommand(String[] dropCreateArgs) throws DBException{
-        if (!commandHasArguments(dropCreateArgs)){
+        if (isEmptyCommand(dropCreateArgs)){
             throw new DBException("Create or Drop command has no arguments.");
         }
         commandString = dropCreateArgs[0];

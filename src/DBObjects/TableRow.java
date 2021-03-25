@@ -10,6 +10,10 @@ import java.util.Arrays;
 public class TableRow extends DBObject implements DBTableObject {
     public ArrayList<String> rowData;
 
+    public TableRow(){
+        rowData = new ArrayList<>();
+    }
+
     public TableRow(String[] rowData){
         this.rowData = new ArrayList<>(Arrays.asList(rowData));
     }
@@ -42,6 +46,10 @@ public class TableRow extends DBObject implements DBTableObject {
     public void addIdValue(int idValue){
         String idString = String.valueOf(idValue);
         rowData.add(0, idString);
+    }
+
+    public void buildCell(String value){
+        rowData.add(value);
     }
 
     public void appendCell(){
