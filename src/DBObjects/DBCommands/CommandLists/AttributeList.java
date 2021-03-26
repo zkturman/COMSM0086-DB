@@ -1,7 +1,6 @@
 package DBObjects.DBCommands.CommandLists;
 
-import DBException.DBException;
-import DBException.InvalidCommandArgumentException;
+import DBException.*;
 import DBObjects.DBTest;
 import DBObjects.TableAttribute;
 

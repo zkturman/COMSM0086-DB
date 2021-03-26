@@ -2,7 +2,7 @@ package DBObjects;
 
 import DBException.DBException;
 
-public abstract class DBObject {
+public class DBObject {
     String objectName;
 
     public String getObjectName() {
@@ -18,5 +18,4 @@ public abstract class DBObject {
     }
     public void createObject() throws DBException {}
     public void dropObject() throws  DBException {}
-    public boolean dbObjectExists(){return false;}
 }

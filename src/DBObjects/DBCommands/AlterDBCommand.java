@@ -4,12 +4,11 @@ import DBException.*;
 import DBObjects.*;
 
 public class AlterDBCommand extends DBCommand {
-    TableAttribute attributeToAlter;
-    AlterType alterType;
+    private TableAttribute attributeToAlter;
+    private AlterType alterType;
+
     public AlterDBCommand(String[] alterArgs) throws DBException{
-        if (isEmptyCommand(alterArgs)){
-            throw new InvalidCommandArgumentException("Alter command has no arguments");
-        }
+        isEmptyCommand(alterArgs);
         commandString = alterArgs[0];
         tokenizedCommand = splitCommand(commandString);
         tokenizedCommand = removeCommandName(tokenizedCommand);
@@ -21,11 +20,8 @@ public class AlterDBCommand extends DBCommand {
     public void prepareCommand() throws DBException {
         int currentToken = 0;
         String tableString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-        if (!tableString.equals("TABLE")){
-            throw new InvalidCommandArgumentException("Expected \"TABLE\" string in alter command.");
-        }
+        compareStrings(tableString, "TABLE");
         String tableName = getNextToken(tokenizedCommand, currentToken++);
-        //Configured in DBCommand parent class
         setupTable(tableName);
         String alterationType = getNextToken(tokenizedCommand, currentToken++);
         if (!convertStringToAlterType(alterationType)){
@@ -33,6 +29,7 @@ public class AlterDBCommand extends DBCommand {
         }
         String attributeName = getNextToken(tokenizedCommand, currentToken++);
         setupAttribute(attributeName);
+        checkCommandEnded(currentToken);
     }
 
     private void setupAttribute(String attributeName) throws DBException {
@@ -43,14 +40,15 @@ public class AlterDBCommand extends DBCommand {
     }
 
     public void executeCommand() throws DBException {
-        if (alterType == AlterType.ADD){
-            tableForCommand.appendAttribute(attributeToAlter);
-        }
-        else if (alterType == AlterType.DROP){
-            tableForCommand.removeAttribute(attributeToAlter);
-        }
-        else {
-            throw new DBInvalidAlterType("Invalid alteration type was provided.");
+        switch(alterType){
+            case ADD:
+                tableForCommand.appendAttribute(attributeToAlter);
+                break;
+            case DROP:
+                tableForCommand.removeAttribute(attributeToAlter);
+                break;
+            default:
+                throw new DBInvalidAlterType("Invalid alteration type was provided.");
         }
     }
 

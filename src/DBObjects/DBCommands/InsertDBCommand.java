@@ -8,37 +8,25 @@ public class InsertDBCommand extends DBCommand {
     ValueList valuesToInsert;
 
     public InsertDBCommand(String[] insertArgs) throws DBException{
-        if (isEmptyCommand(insertArgs)){
-            throw new InvalidCommandArgumentException("Insert command has no arguments.");
+        isEmptyCommand(insertArgs);
+        if (insertArgs.length != 2){
+            throw new InvalidCommandArgumentException("Insert argument did not have the expected structure.");
         }
         commandString = insertArgs[0];
         tokenizedCommand = splitCommand(commandString);
         tokenizedCommand = removeCommandName(tokenizedCommand);
-        if (insertArgs.length == 1){
-            throw new InvalidCommandArgumentException("Insert command expects a list of values.");
-        }
         listString = insertArgs[1];
-        if (insertArgs.length > 2){
-            throw new InvalidCommandArgumentException("Insert argument did not have the expected structure.");
-        }
     }
 
     public void prepareCommand() throws DBException {
         int currentToken = 0;
         String intoString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-        if (!intoString.equals("INTO")){
-            throw new InvalidCommandArgumentException("Expected \"INTO\" string in insert command.");
-        }
+        compareStrings(intoString, "INTO");
         String tableName = getNextToken(tokenizedCommand, currentToken++);
-        //Configured in DBCommand parent class
         setupTable(tableName);
         String valuesString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-        if (!valuesString.equals("VALUES")){
-            throw new InvalidCommandArgumentException("Expected \"VALUES\" string in insert command.");
-        }
-        if (tokenizedCommand.length != currentToken){
-           throw new InvalidCommandArgumentException("Insert command did not have the correct structure.");
-        }
+        compareStrings(valuesString, "VALUES");
+        checkCommandEnded(currentToken);
         prepareValueList(listString);
     }
 
@@ -50,6 +38,8 @@ public class InsertDBCommand extends DBCommand {
     }
 
     public void executeCommand() throws DBException {
-        tableForCommand.insertRow(valuesToInsert.getValueList());
+        tableForCommand.insertTableRow(valuesToInsert.getValueList());
     }
+
+
 }

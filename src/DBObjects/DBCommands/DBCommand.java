@@ -111,11 +111,10 @@ public abstract class DBCommand extends DBObject {
         tableForCommand.loadTableFile();
     }
 
-    public boolean isEmptyCommand(String[] commandAry) throws DBException{
+    public void isEmptyCommand(String[] commandAry) throws DBException{
         if (commandAry.length < 1) {
             throw new InvalidCommandArgumentException("Command has no arguments.");
         }
-        return false;
     }
 
     protected String[] splitCommand(String commandString) throws DBException {
@@ -135,6 +134,19 @@ public abstract class DBCommand extends DBObject {
             startIndex = 2;
         }
         return Arrays.copyOfRange(tokenizedCommand, startIndex, tokenizedCommand.length);
+    }
+
+    public void compareStrings(String tokenString, String expectedString) throws DBException{
+        if (!tokenString.equals(expectedString)){
+            throw new DBServerException("oops");
+        }
+    }
+
+    public void checkCommandEnded(int tokenIndex) throws DBException {
+        if (tokenIndex != tokenizedCommand.length){
+            throw new InvalidCommandArgumentException("Command did not have the correct structure.");
+
+        }
     }
 
     public abstract void prepareCommand() throws DBException;
