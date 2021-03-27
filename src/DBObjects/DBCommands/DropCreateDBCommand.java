@@ -10,9 +10,7 @@ public abstract class DropCreateDBCommand extends DBCommand {
 
 
     protected DropCreateDBCommand(String[] dropCreateArgs) throws DBException{
-        if (isEmptyCommand(dropCreateArgs)){
-            throw new DBException("Create or Drop command has no arguments.");
-        }
+        isEmptyCommand(dropCreateArgs);
         commandString = dropCreateArgs[0];
         tokenizedCommand = splitCommand(commandString);
         tokenizedCommand = removeCommandName(tokenizedCommand);
@@ -38,16 +36,10 @@ public abstract class DropCreateDBCommand extends DBCommand {
         if (type == StructureType.DATABASE){
             return new DBDatabase(objectName);
         }
-        else if (type == StructureType.TABLE){
-            if (workingDatabase == null){
-                throw new NotUsingDBException("No working database has been selected.");
-            }
-            DBTable tableToChange = new DBTable(objectName, workingDatabase);
-            return tableToChange;
+        if (type == StructureType.TABLE){
+            return new DBTable(objectName, workingDatabase);
         }
-        else {
-            throw new InvalidCommandArgumentException("No appropriate structure type is specified.");
-        }
+        throw new InvalidCommandArgumentException("No appropriate structure type is specified.");
     }
 
     public abstract void setupListVars(String[] commandArgs) throws DBException;

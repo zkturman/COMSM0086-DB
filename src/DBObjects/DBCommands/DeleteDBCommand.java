@@ -10,9 +10,7 @@ public class DeleteDBCommand extends DBCommand {
     CommandCondition deleteConditions;
 
     public DeleteDBCommand(String[] deleteArgs) throws DBException {
-        if (isEmptyCommand(deleteArgs)){
-            throw new InvalidCommandArgumentException("Delete command has no arguments.");
-        }
+        isEmptyCommand(deleteArgs);
         commandString = deleteArgs[0];
         tokenizedCommand = splitCommand(commandString);
         tokenizedCommand = removeCommandName(tokenizedCommand);
@@ -28,30 +26,29 @@ public class DeleteDBCommand extends DBCommand {
     public void prepareCommand() throws DBException {
         int currentToken = 0;
         String fromString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-        if (!fromString.equals("FROM")){
-            throw new InvalidCommandArgumentException("Expected \"FROM\" string in delete command.");
-        }
+        compareStrings(fromString, "FROM");
         String tableName = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
         //Configured in DBCommand parent class
         setupTable(tableName);
         String whereString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-        if (!whereString.equals("WHERE")){
-            throw new InvalidCommandArgumentException("Expected \"WHERE\" string in select command.");
-        }
+        compareStrings(whereString, "WHERE");
         if (currentToken != tokenizedCommand.length && listString == null){
             listString = commandString.split("(?i)\\s+where\\s+")[1];
-            tokenizedCommand = Arrays.copyOfRange(tokenizedCommand, 0, currentToken);
+//            tokenizedCommand = Arrays.copyOfRange(tokenizedCommand, 0, currentToken);
         }
-        if (currentToken == tokenizedCommand.length && listString != null) {
+//        if (currentToken == tokenizedCommand.length && listString != null) {
             prepareConditions();
-        }
-        else{
-            throw new InvalidCommandArgumentException("Update conditions were of the incorrect form.");
-        }
-        prepareConditions();
+//        }
+//        else{
+//            throw new InvalidCommandArgumentException("Update conditions were of the incorrect form.");
+//        }
+//        prepareConditions();
     }
 
     public void prepareConditions() throws DBException {
+        if (listString == null){
+            throw new InvalidCommandArgumentException("Delete command expects condition.");
+        }
         deleteConditions = new CommandCondition(listString);
         deleteConditions.parseList();
     }

@@ -6,7 +6,11 @@ package DBObjects;
 
 import DBException.*;
 import DBObjects.DBCommands.CommandLists.NameValueList;
+
+import javax.naming.Name;
+import javax.print.DocFlavor;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class DBTable extends DBObject implements DBTableObject {
@@ -17,8 +21,11 @@ public class DBTable extends DBObject implements DBTableObject {
     private ArrayList<TableRow> tableRows;
     private TableAttribute joinAttribute;
 
-    public DBTable(String tableName, DBDatabase owningDatabase){
+    public DBTable(String tableName, DBDatabase owningDatabase) throws DBException {
         super(tableName);
+        if (owningDatabase == null){
+            throw new NotUsingDBException("No database is being used.");
+        }
         this.owningDatabase = owningDatabase;
         setTableFilePaths();
         tableAttributes = new ArrayList<>();
@@ -202,9 +209,14 @@ public class DBTable extends DBObject implements DBTableObject {
     public void updateTable(NameValueList updateNameValues) throws DBException {
         ArrayList<TableRow> rowUpdates = new ArrayList<>(tableRows);
         loadTableFile();
+        updateRowValues(rowUpdates, updateNameValues);
+        updateRows(rowUpdates);
+        defineFileData(tablePath, tableRows);
+    }
+
+    private void updateRowValues(ArrayList<TableRow> rowUpdates, NameValueList updateNameValues) throws DBException {
         ArrayList<TableAttribute> attributesToUpdate = updateNameValues.getAttributesToChange();
         ArrayList<String> valuesForUpdates = updateNameValues.getValuesForChange();
-
         for (int i = 0; i < attributesToUpdate.size(); i++){
             TableAttribute attribute = attributesToUpdate.get(i);
             int attributeIndex = getAttributeIndex(attribute.getObjectName());
@@ -213,6 +225,9 @@ public class DBTable extends DBObject implements DBTableObject {
                 row.updateValue(valueToUse, attributeIndex);
             }
         }
+    }
+
+    private void updateRows(ArrayList<TableRow> rowUpdates){
         for (int i = 0; i < tableRows.size(); i++){
             for (TableRow updatedRow : rowUpdates){
                 if (tableRows.get(i).getValue(0).equals(updatedRow.getValue(0))){
@@ -220,7 +235,6 @@ public class DBTable extends DBObject implements DBTableObject {
                 }
             }
         }
-        defineFileData(tablePath, tableRows);
     }
 
     /**
@@ -346,10 +360,33 @@ public class DBTable extends DBObject implements DBTableObject {
         if (tableAttributes.size() == 1){
             loadAttributeFile();
         }
+        returnString.append(printAttributes(customAttributes));
+        returnString.append(System.lineSeparator());
+        returnString.append(printRows(customAttributes));
+        return returnString.toString();
+    }
+
+    /**
+     * Creates a string of a tables attributes.
+     * @param customAttributes Specific attributes to be printed
+     * @return Returns a StringBuild of the current attributes.
+     */
+    private StringBuilder printAttributes(ArrayList<TableAttribute> customAttributes){
+        StringBuilder returnString = new StringBuilder();
         for (TableAttribute attribute : customAttributes){
             returnString.append(attribute.getObjectName()).append("\t");
         }
-        returnString.append(System.lineSeparator());
+        return returnString;
+    }
+
+    /**
+     * Creates a string of a table's row data for the specified attributes.
+     * @param customAttributes Attributes to determine which values are retrieved from the table
+     * @return StringBuild with row data.
+     * @throws DBException Thrown if a custom attribute does not exist in the table.
+     */
+    private StringBuilder printRows(ArrayList<TableAttribute> customAttributes) throws DBException {
+        StringBuilder returnString = new StringBuilder();
         for (TableRow row : tableRows){
             for (TableAttribute customAttribute : customAttributes) {
                 int attributeIndex = getAttributeIndex(customAttribute.getObjectName());
@@ -357,7 +394,7 @@ public class DBTable extends DBObject implements DBTableObject {
             }
             returnString.append(System.lineSeparator());
         }
-        return returnString.toString();
+        return returnString;
     }
 
     /**
@@ -443,9 +480,14 @@ public class DBTable extends DBObject implements DBTableObject {
         }
     }
 
+    /**
+     * Checks if a given file exists.
+     * @param fileToCheck File to check
+     * @throws DBServerException Thrown if the given file does not exist.
+     */
     private void checkFileExits(File fileToCheck) throws DBServerException {
         if (!fileToCheck.exists()){
-            throw new DBServerException("Could not find attribute definitions.");
+            throw new DBServerException("Could not find table definitions.");
         }
     }
 

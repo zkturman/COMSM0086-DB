@@ -15,9 +15,7 @@ public class UpdateDBCommand extends DBCommand {
     CommandCondition updateConditions;
 
     protected UpdateDBCommand(String[] updateArgs) throws DBException{
-        if (isEmptyCommand(updateArgs)){
-            throw new InvalidCommandArgumentException("Update command has no arguments.");
-        }
+        isEmptyCommand(updateArgs);
         commandString = updateArgs[0];
         //Finds and removes the NameValueList
         tokenizedCommand = splitCommand(commandString);
@@ -37,24 +35,21 @@ public class UpdateDBCommand extends DBCommand {
         //Configured in DBCommand parent class
         setupTable(tableName);
         String setString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-        if (!setString.equals("SET")){
-            throw new InvalidCommandArgumentException("Expected \"SET\" string in update command");
-        }
+        compareStrings(setString, "SET");
         prepareNameValues();
         String whereString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-        if (!whereString.equals("WHERE")){
-            throw new InvalidCommandArgumentException("Expected \"WHERE\" string in select command.");
-        }
+        compareStrings(whereString, "WHERE");
         if (currentToken != tokenizedCommand.length && listString == null){
             listString = commandString.split("(?i)\\s+where\\s+")[1];
-            tokenizedCommand = Arrays.copyOfRange(tokenizedCommand, 0, currentToken);
+//            tokenizedCommand = Arrays.copyOfRange(tokenizedCommand, 0, currentToken);
+//            prepareConditions();
         }
-        if (currentToken == tokenizedCommand.length && listString != null) {
-            prepareConditions();
-        }
-        else{
-            throw new InvalidCommandArgumentException("Update conditions were of the incorrect form.");
-        }
+        prepareConditions();
+//        if (currentToken == tokenizedCommand.length && listString != null) {
+//        }
+//        else{
+//            throw new InvalidCommandArgumentException("Update conditions were of the incorrect form.");
+//        }
     }
 
 

@@ -1,9 +1,11 @@
-package DBObjects;
-import DBException.DBException;
-import DBException.DBServerException;
+/**
+ *
+ */
 
+package DBObjects;
+
+import DBException.*;
 import java.io.*;
-import java.nio.file.Files;
 
 public class DBDatabase extends DBObject{
     public DBDatabase(String databaseName){
@@ -11,7 +13,6 @@ public class DBDatabase extends DBObject{
     }
 
     public void createObject() throws DBException {
-        //try here for nullpointerexecption
         File dbToCreate = new File(objectName);
         try {
             if (!dbToCreate.mkdir()) {
@@ -26,30 +27,31 @@ public class DBDatabase extends DBObject{
     public void dropObject() throws DBException {
         File dbToDrop = new File(objectName);
         File[] tablesToDrop = dbToDrop.listFiles();
-        try{
-            if (tablesToDrop != null) {
-                for (int i = 0; i < tablesToDrop.length; i++) {
-                    if (!tablesToDrop[i].delete()) {
-                        throw new IOException();
-                        //throw new DBServerException("Failed to drop table in database.");
-                    }
-                }
-            }
-            if (!dbToDrop.delete()){
-                throw new DBServerException("Failed to delete database.");
-            }
+        if (tablesToDrop != null){
+            deleteDirectory(tablesToDrop);
         }
-        catch (SecurityException se){
-            throw new DBServerException("Failed to delete database.");
-        }
-        catch (IOException ioe){
-            ioe.getCause();
-            ioe.printStackTrace();
-        }
+        deleteFile(dbToDrop);
     }
 
     public boolean dbObjectExists(){
         File databaseFolder = new File(objectName);
         return (databaseFolder.exists() && databaseFolder.isDirectory());
+    }
+
+    private void deleteDirectory(File[] directoryToDelete) throws DBException {
+        for (File file : directoryToDelete) {
+            deleteFile(file);
+        }
+    }
+
+    private void deleteFile(File fileToDelete) throws DBException {
+        try {
+            if (!fileToDelete.delete()) {
+                throw new DBServerException("Failed to database object.");
+            }
+        }
+       catch (SecurityException se){
+            throw new DBServerException("Failed to delete database.");
+        }
     }
 }
