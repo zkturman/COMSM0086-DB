@@ -1,8 +1,3 @@
-/**
- * Contains the definition of a DBTable. Creates a table for persistent storage
- * which can be accessed, modified, and printed. A table must belong to a database.
- */
-
 package DBObjects;
 
 import DBException.*;
@@ -10,6 +5,10 @@ import DBObjects.DBCommands.CommandLists.NameValueList;
 import java.io.*;
 import java.util.ArrayList;
 
+/**
+ * Contains the definition of a DBTable. Creates a table for persistent storage
+ * which can be accessed, modified, and printed. A table must belong to a database.
+ */
 public class DBTable extends DBObject implements DBTableObject {
     private String attributePath;
     private String tablePath;

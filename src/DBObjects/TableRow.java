@@ -1,7 +1,4 @@
-/**
- * TableRow class handles the creation, editing, and removal of
- * table rows from a table.
- */
+
 package DBObjects;
 
 
@@ -9,6 +6,10 @@ import DBException.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * TableRow class handles the creation, editing, and removal of
+ * table rows from a table.
+ */
 public class TableRow extends DBObject implements DBTableObject {
 
     private ArrayList<String> rowData;

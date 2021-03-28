@@ -1,12 +1,12 @@
-/**
- * Test class for parsing and interpreting.
- * Focuses on assertion testing.
- */
 package DBObjects;
 
 import DBObjects.DBCommands.CommandLists.*;
 import DBObjects.DBCommands.SelectDBCommand;
 
+/**
+ * Test class for parsing and interpreting.
+ * Focuses on assertion testing.
+ */
 public class DBTest extends DBObject {
 
     /**

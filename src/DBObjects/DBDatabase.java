@@ -1,12 +1,13 @@
-/**
- *Handles the creation and deletion of databases. Databases are implemented as folders.
- */
+
 
 package DBObjects;
 
 import DBException.*;
 import java.io.*;
 
+/**
+ *Handles the creation and deletion of databases. Databases are implemented as folders.
+ */
 public class DBDatabase extends DBObject{
 
     /**
@@ -14,7 +15,6 @@ public class DBDatabase extends DBObject{
      * @param databaseName Name of the new DBDatabase.
      */
     public DBDatabase(String databaseName){
-        databaseName = databaseName;
         this.objectName = databaseName;
     }
 

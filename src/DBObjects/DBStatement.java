@@ -1,15 +1,14 @@
+package DBObjects;
+
+import DBException.*;
+import DBObjects.DBCommands.DBCommand;
+import java.util.regex.*;
+
 /**
  * DBStatement class. Used to receive statements from the server. Passes errors and return messages
  * from commands to the server. Also does initial processing of commands to ensure the correct command
  * is interpreted.
  */
-
-package DBObjects;
-
-import DBException.*;
-import DBObjects.DBCommands.DBCommand;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DBStatement {
     private DBDatabase workingDatabase;

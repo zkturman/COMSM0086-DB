@@ -1,12 +1,11 @@
-/**
- * Database object parent class. Contains the default constructor for all database objects,
- * and validates the name of all database objects.
- */
-
 package DBObjects;
 
 import DBException.*;
 
+/**
+ * Database object parent class. Contains the default constructor for all database objects,
+ * and validates the name of all database objects.
+ */
 public class DBObject {
     protected String objectName;
 

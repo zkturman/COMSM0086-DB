@@ -1,9 +1,8 @@
+package DBObjects;
+
 /**
  * Table attribute class. Contains information about a tables attributes.
  */
-
-package DBObjects;
-
 public class TableAttribute extends DBObject implements DBTableObject {
 
     /**
@@ -23,10 +22,10 @@ public class TableAttribute extends DBObject implements DBTableObject {
         return attributeToCheck.objectName.equals(this.objectName);
     }
 
-    @Override
     /**
      * Returns the name of an attribute.
      */
+    @Override
     public String toString() {
         return objectName;
     }
