@@ -1,14 +1,27 @@
+/**
+ * DBStatement class. Used to receive statements from the server. Passes errors and return messages
+ * from commands to the server. Also does initial processing of commands to ensure the correct command
+ * is interpreted.
+ */
+
 package DBObjects;
 
 import DBException.*;
 import DBObjects.DBCommands.DBCommand;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DBStatement {
     private DBDatabase workingDatabase;
     private String returnMessage;
+
+    /**
+     * Constructor for a DBStatement. Instantiates a new statement and holds any return messages.
+     * @param workingDatabase Current working database for commands.
+     */
+    public DBStatement(DBDatabase workingDatabase){
+        this.workingDatabase = workingDatabase;
+    }
 
     /**
      * Returns the current working database. USE command can update this.
@@ -26,11 +39,6 @@ public class DBStatement {
         return returnMessage;
     }
 
-
-    public DBStatement(DBDatabase workingDatabase){
-        this.workingDatabase = workingDatabase;
-    }
-
     /**
      * Performs a SQL query and generates parsing errors. Evaluates queries differently depending on
      * the initial command (i.e. the first token).
@@ -38,9 +46,7 @@ public class DBStatement {
      * @throws DBException Thrown if an error is encounter when parsing a SQL query.
      */
     public void performStatement(String commandString) throws DBException {
-        if (commandString == null || commandString.length() == 0){
-            throw new DBInvalidCommandException("Command was empty.");
-        }
+        checkCommandSize(commandString);
         commandString = removeSemicolon(commandString);
         String[] commandToProcess = separateLists(commandString);
         String firstToken = getFirstToken(commandToProcess[0]);
@@ -51,6 +57,17 @@ public class DBStatement {
         sqlDBCommand.processCommand(workingDatabase);
         workingDatabase = sqlDBCommand.getWorkingDatabase();
         returnMessage = sqlDBCommand.getReturnMessage();
+    }
+
+    /**
+     * Confirms the command string has content.
+     * @param commandString String to check.
+     * @throws DBException Thrown if the string is null or is zero length.
+     */
+    private void checkCommandSize(String commandString) throws DBException{
+        if (commandString == null || commandString.length() == 0){
+            throw new DBInvalidCommandException("Command was empty.");
+        }
     }
 
     /**
@@ -76,10 +93,11 @@ public class DBStatement {
      * @throws DBException If there is no terminating semicolon.
      */
     private String removeSemicolon(String statement) throws DBException {
-        if (statement.charAt(statement.length() - 1) != ';'){
+        int newEnd = statement.length() - 1;
+        if (statement.charAt(newEnd) != ';'){
             throw new DBNonTerminatingException("String did not end with a semicolon.");
         }
-        return statement.substring(0, statement.length() - 1);
+        return statement.substring(0, newEnd);
     }
 
     /**
@@ -93,6 +111,9 @@ public class DBStatement {
         return statement.split("(?=\\()", 2);
     }
 
+    /**
+     * Used to test functionality of DBStatement
+     */
     public static void test(){
         String statement1 = "create new table test1;", statement2 = "insert into test1 values ('ab', 1234);";
         DBStatement test1 = new DBStatement(null);

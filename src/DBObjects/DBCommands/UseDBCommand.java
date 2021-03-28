@@ -1,9 +1,7 @@
 package DBObjects.DBCommands;
 
-import DBException.DBObjectDoesNotExistException;
-import DBException.DBException;
-import DBException.InvalidCommandArgumentException;
-import DBObjects.DBDatabase;
+import DBException.*;
+import DBObjects.*;
 
 public class UseDBCommand extends DBCommand {
     DBDatabase databaseToUse;

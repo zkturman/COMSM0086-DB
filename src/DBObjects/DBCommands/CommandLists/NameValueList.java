@@ -5,6 +5,8 @@ import DBObjects.*;
 
 import java.util.ArrayList;
 
+import static DBObjects.DBCommands.DBCommand.isNameValid;
+
 public class NameValueList extends ValueList {
     ArrayList<TableAttribute> attributesToChange;
     ArrayList<String> valuesForChange;

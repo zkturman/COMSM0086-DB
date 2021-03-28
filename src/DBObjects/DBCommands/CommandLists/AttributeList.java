@@ -7,6 +7,7 @@ import DBObjects.TableAttribute;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import static DBObjects.DBCommands.DBCommand.*;
 
 public class AttributeList extends CommandList{
 

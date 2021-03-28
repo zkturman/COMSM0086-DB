@@ -1,11 +1,18 @@
+/**
+ * Test class for parsing and interpreting.
+ * Focuses on assertion testing.
+ */
 package DBObjects;
 
 import DBObjects.DBCommands.CommandLists.*;
 import DBObjects.DBCommands.SelectDBCommand;
-import DBObjects.DBObject;
 
 public class DBTest extends DBObject {
 
+    /**
+     * Used to check processing of certain classes.
+     * @param args Args for main command. Not used.
+     */
     public static void main (String[] args){
         AttributeList.test();
         ValueList.test();
@@ -16,6 +23,11 @@ public class DBTest extends DBObject {
         DBExpression.test();
         NameValueList.test();
     }
+
+    /**
+     * Used to process testing messages.
+     * @param completeMessage Message to print.
+     */
     public static void passMessage(String completeMessage){
         System.out.println(completeMessage);
     }

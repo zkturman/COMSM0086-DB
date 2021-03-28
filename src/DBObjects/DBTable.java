@@ -1,16 +1,13 @@
 /**
- * @(#)
+ * Contains the definition of a DBTable. Creates a table for persistent storage
+ * which can be accessed, modified, and printed. A table must belong to a database.
  */
 
 package DBObjects;
 
 import DBException.*;
 import DBObjects.DBCommands.CommandLists.NameValueList;
-
-import javax.naming.Name;
-import javax.print.DocFlavor;
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class DBTable extends DBObject implements DBTableObject {
@@ -21,6 +18,12 @@ public class DBTable extends DBObject implements DBTableObject {
     private ArrayList<TableRow> tableRows;
     private TableAttribute joinAttribute;
 
+    /**
+     * Constructor for a DBTable.
+     * @param tableName Name of the table.
+     * @param owningDatabase Owning database. This is required.
+     * @throws DBException Thrown if there owningDatabase is null.
+     */
     public DBTable(String tableName, DBDatabase owningDatabase) throws DBException {
         super(tableName);
         if (owningDatabase == null){
@@ -33,6 +36,11 @@ public class DBTable extends DBObject implements DBTableObject {
         tableRows = new ArrayList<>();
     }
 
+    /**
+     * Constructor for a DBTable that only requires the table name. Does not instantiate
+     * table for persistent storage. Primarily used to create a joined table.
+     * @param tableName Name of table to create.
+     */
     protected DBTable(String tableName){
         super(tableName);
         tableAttributes = new ArrayList<>();
@@ -40,27 +48,53 @@ public class DBTable extends DBObject implements DBTableObject {
         tableRows = new ArrayList<>();
     }
 
+    /**
+     * Sets the row and attribute files for a table.
+     */
     private void setTableFilePaths() {
         attributePath = createPath("txt");
         tablePath = createPath("tsv");
     }
 
-
-
-    //used in command / externally
+    /**
+     * Used to get a row of data from a table.
+     * @param index The row of data to return.
+     * @return Returns a table row.
+     */
     public TableRow getTableRow(int index){
         return tableRows.get(index);
     }
+
+    /**
+     * Removes a row from a table.
+     * @param index The row to remove.
+     */
     public void removeTableRow(int index){
         tableRows.remove(index);
     }
+
+    /**
+     * Returns the number of rows in the table.
+     * @return Number of rows in table.
+     */
     public int getNumRows(){
         return tableRows.size();
     }
+
+    /**
+     * Returns a table's row data.
+     * @return Returns a table's rows.
+     */
     public ArrayList<TableRow> getTableRows() {
         return tableRows;
     }
 
+    /**
+     * Returns attribute index given an attribute name.
+     * @param attributeName Attribute name to search.
+     * @return Index of attribute in table.
+     * @throws DBException Thrown if attribute does not exist in table.
+     */
     public int getAttributeIndex(String attributeName) throws DBException{
         for (int i = 0; i < tableAttributes.size(); i++){
             if (tableAttributes.get(i).getObjectName().equals(attributeName)){
@@ -69,13 +103,30 @@ public class DBTable extends DBObject implements DBTableObject {
         }
         throw new DBObjectDoesNotExistException("Could not find attribute in table.");
     }
+
+    /**
+     * Updates a table's attributes.
+     * @param tableAttributes New table attributes.
+     * @throws DBException Thrown if data could not be stored to file.
+     */
     public void setTableAttributes(ArrayList<TableAttribute> tableAttributes) throws DBException{
         this.tableAttributes.addAll(tableAttributes);
         defineFileData(attributePath, this.tableAttributes);
     }
+
+    /**
+     * Gets the list of attributes in the table.
+     * @return Returns the table's attributes.
+     */
     public ArrayList<TableAttribute> getTableAttributes() {
         return tableAttributes;
     }
+
+    /**
+     * Sets a join attribute in the table that is used for joining.
+     * @param joinAttribute Attribute to join on.
+     * @throws DBException Thrown if attribute does not exist in table.
+     */
     public void setJoinAttribute(TableAttribute joinAttribute) throws DBException {
         loadAttributeFile();
         boolean found = false;
@@ -89,12 +140,14 @@ public class DBTable extends DBObject implements DBTableObject {
         }
         this.joinAttribute = joinAttribute;
     }
+
+    /**
+     * Returns the join attribute of a table.
+     * @return Table's join attribute.
+     */
     public TableAttribute getJoinAttribute() {
         return joinAttribute;
     }
-
-
-
 
     /**
      * Creates a new persistent table in the working database.
@@ -117,7 +170,7 @@ public class DBTable extends DBObject implements DBTableObject {
         }
         try {
             if (!fileToCreate.createNewFile()){
-                throw new DBServerException("Server not ableto create new file.");
+                throw new DBServerException("Server not able to create new file.");
             }
         }
         catch (IOException ioe){
@@ -145,8 +198,12 @@ public class DBTable extends DBObject implements DBTableObject {
         }
     }
 
-
-
+    /**
+     * Adds a new attribute to a table. The attribute is appended to the current attributes
+     * and null data is filled in for existing rows.
+     * @param attributeToAppend Attribute to append to table.
+     * @throws DBException Thrown if table updates could not be stored.
+     */
     public void appendAttribute(TableAttribute attributeToAppend) throws DBException {
         loadAttributeFile();
         tableAttributes.add(attributeToAppend);
@@ -155,20 +212,19 @@ public class DBTable extends DBObject implements DBTableObject {
             row.appendCell();
         }
         defineFileData(tablePath, tableRows);
-    };
+    }
 
+    /**
+     * Removes an attribute and any corresponding values in a table.
+     * @param attributeToRemove The attribute to be removed from the table.
+     * @throws DBException Thrown if the attribute does not exist in the table.
+     */
     public void removeAttribute(TableAttribute attributeToRemove) throws DBException {
         loadAttributeFile();
         int i;
         boolean foundColumn = false;
         for (i = 0; i < tableAttributes.size(); i++){
-            if (tableAttributes.get(i).equals(attributeToRemove)){
-                tableAttributes.remove(i);
-                foundColumn = true;
-                for (TableRow row : tableRows){
-                    row.removeValue(i);
-                }
-            }
+            foundColumn = removeAttributeValues(attributeToRemove, i, foundColumn);
         }
         if (!foundColumn){
             throw new DBInvalidObjectName("Attribute with this name not present.");
@@ -178,9 +234,32 @@ public class DBTable extends DBObject implements DBTableObject {
     }
 
     /**
-     *
-     * @param newRow
-     * @throws DBException
+     * Removes values in rows for a specific attribute.
+     * @param attributeToRemove The attribute to remove.
+     * @param index Current index of table attributes.
+     * @param foundColumn Determines if any matching column has been found. If not set to true,
+     *                    the attribute did not exist in the table.
+     * @return True if a specified attribute has been found in the table attribute definitions.
+     */
+    private boolean removeAttributeValues(TableAttribute attributeToRemove, int index, boolean foundColumn){
+        if (tableAttributes.get(index).equals(attributeToRemove)){
+            tableAttributes.remove(index);
+            if (!foundColumn){
+                foundColumn = true;
+            }
+            for (TableRow row : tableRows){
+                row.removeValue(index);
+            }
+        }
+        return foundColumn;
+    }
+
+    /**
+     * Adds a new row to the table.
+     * @param newRow Row to add to the table.
+     * @throws DBException Thrown if the new row doesn't contain the same
+     * number of values as there are attributes. Also thrown if the data
+     * couldn't be saved to the database.
      */
     public void insertTableRow(TableRow newRow) throws DBException {
         newRow.addIdValue(tableRows.size() + 1);
@@ -214,6 +293,12 @@ public class DBTable extends DBObject implements DBTableObject {
         defineFileData(tablePath, tableRows);
     }
 
+    /**
+     * Prepares rows with updated values.
+     * @param rowUpdates Rows that will contain updated values.
+     * @param updateNameValues Attributes and corresponding values that need to be updated.
+     * @throws DBException Thrown if an attribute does not exist in the table.
+     */
     private void updateRowValues(ArrayList<TableRow> rowUpdates, NameValueList updateNameValues) throws DBException {
         ArrayList<TableAttribute> attributesToUpdate = updateNameValues.getAttributesToChange();
         ArrayList<String> valuesForUpdates = updateNameValues.getValuesForChange();
@@ -227,6 +312,10 @@ public class DBTable extends DBObject implements DBTableObject {
         }
     }
 
+    /**
+     * Updates rows with new values.
+     * @param rowUpdates List of rows with updates values.
+     */
     private void updateRows(ArrayList<TableRow> rowUpdates){
         for (int i = 0; i < tableRows.size(); i++){
             for (TableRow updatedRow : rowUpdates){
@@ -339,7 +428,7 @@ public class DBTable extends DBObject implements DBTableObject {
         TableRow partialRow = tableRows.get(index);
         //start at 1 to exclude row ids
         for (int i = 1; i < rowToAdd.getSize(); i++){
-            partialRow.buildCell(rowToAdd.getValue(i));
+            partialRow.appendCell(rowToAdd.getValue(i));
         }
     }
 

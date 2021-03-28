@@ -8,6 +8,8 @@ import DBObjects.TableRow;
 
 import java.util.Locale;
 
+import static DBObjects.DBCommands.DBCommand.isNameValid;
+
 public class DBExpression extends CommandCondition {
 
     String operator;

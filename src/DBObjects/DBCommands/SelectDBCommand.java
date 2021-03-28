@@ -13,14 +13,11 @@ public class SelectDBCommand extends DBCommand{
     CommandCondition selectConditions;
 
     public SelectDBCommand(String[] selectArgs) throws DBException{
-        if (isEmptyCommand(selectArgs)){
-            throw new InvalidCommandArgumentException("Select command has no arguments.");
-        }
+        isEmptyCommand(selectArgs);
         if (selectArgs.length > 2){
             throw new InvalidCommandArgumentException("Select command has the incorrect form.");
         }
         commandString = selectArgs[0];
-        //finds and removes the WildAttributeList
         tokenizedCommand = splitCommand(commandString);
         tokenizedCommand = removeCommandName(tokenizedCommand);
         if (selectArgs.length == 2){
@@ -33,17 +30,12 @@ public class SelectDBCommand extends DBCommand{
         int currentToken = 0;
         prepareAttributes();
         String fromString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-        if (!fromString.equals("FROM")){
-            throw new InvalidCommandArgumentException("Expected \"FROM\" string in select command");
-        }
+        compareStrings(fromString, "FROM");
         String tableName = getNextToken(tokenizedCommand, currentToken++);
-        //Configured in DBCommand parent class
         setupTable(tableName);
         if (currentToken != tokenizedCommand.length){
-            String whereString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-            if (!whereString.equals("WHERE")){
-                throw new InvalidCommandArgumentException("Expected \"WHERE\" string in select command.");
-            }
+            String whereString = getNextToken(tokenizedCommand, currentToken).toUpperCase();
+            compareStrings(whereString, "WHERE");
             if (listString == null){
                 listString = commandString.split("(?i)\\s+where\\s+")[1];
             }
@@ -99,7 +91,9 @@ public class SelectDBCommand extends DBCommand{
             selectTest.splitCommand("select a, b, c, d from table test1");
             assert selectTest.attributeString.equals(" a, b, c, d ");
         }
-        catch (DBException dbe){}
+        catch (DBException dbe){
+            System.out.println("SelectDBCommand tests threw an error.");
+        }
         System.out.println("SelectDBCommand passed.");
     }
 

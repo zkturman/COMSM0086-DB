@@ -13,9 +13,7 @@ public class JoinDBCommand extends DBCommand {
     TableAttribute secondaryAttribute;
 
     protected JoinDBCommand(String[] joinArgs) throws DBException {
-        if (isEmptyCommand(joinArgs)){
-            throw new InvalidCommandArgumentException("Join command has no arguments.");
-        }
+        isEmptyCommand(joinArgs);
         if (joinArgs.length != 1){
             throw new InvalidCommandArgumentException("Join command has the incorrect form.");
         }
@@ -23,40 +21,41 @@ public class JoinDBCommand extends DBCommand {
         tokenizedCommand = splitCommand(commandString);
         tokenizedCommand = removeCommandName(tokenizedCommand);
     }
+
     @Override
     public void prepareCommand() throws DBException {
         int currentToken = 0;
+
         String primaryTable = getNextToken(tokenizedCommand, currentToken++);
         setupTable(primaryTable, DBJoinTableType.PRIMARY);
+
         String tableAndString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-        if (!tableAndString.equals("AND")){
-            throw new InvalidCommandArgumentException("Expected \"AND\" string between tables in join command.");
-        }
+        compareStrings(tableAndString, "AND");
+
         String secondaryTable = getNextToken(tokenizedCommand, currentToken++);
         setupTable(secondaryTable, DBJoinTableType.SECONDARY);
+
         String onString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-        if (!onString.equals("ON")){
-            throw new InvalidCommandArgumentException("Expected \"ON\" string in join command.");
-        }
+        compareStrings(onString, "ON");
+
         String primaryAttributeString = getNextToken(tokenizedCommand, currentToken++);
         if (!isNameValid(primaryAttributeString)){
             throw new InvalidCommandArgumentException("Primary attribute name was not valid.");
         }
         primaryAttribute = new TableAttribute(primaryAttributeString);
         tableForCommand.setJoinAttribute(primaryAttribute);
+
         String attributeAndString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
-        if (!attributeAndString.equals("AND")){
-            throw new InvalidCommandArgumentException("Expected \"AND\" string between attributes in join command.");
-        }
+        compareStrings(attributeAndString, "AND");
+
         String secondaryAttributeString = getNextToken(tokenizedCommand,currentToken++);
         if (!isNameValid(secondaryAttributeString)){
             throw new InvalidCommandArgumentException("Secondary attribute name was not valid.");
         }
         secondaryAttribute = new TableAttribute(secondaryAttributeString);
         tableToJoin.setJoinAttribute(secondaryAttribute);
-        if (currentToken != tokenizedCommand.length){
-            throw new InvalidCommandArgumentException("Join command was not the expected number of arguments.");
-        }
+
+        checkCommandEnded(currentToken);
     }
 
     public void setupTable(String tableName, DBJoinTableType type) throws DBException {
@@ -90,6 +89,9 @@ public class JoinDBCommand extends DBCommand {
     }
 
     @Override
+    /**
+     *
+     */
     public String[] removeCommandName(String[] tokenizedCommand) {
         return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
     }
