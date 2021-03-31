@@ -62,7 +62,7 @@ public class SelectDBCommand extends DBCommand{
     /**
      * Parses and configures objects to handles the attributes of
      * a SELECT command.
-     * @throws DBException Thrown if the list is incorreclty formatted.
+     * @throws DBException Thrown if the list is incorrectly formatted.
      */
     protected void prepareAttributes() throws DBException {
         selectAttributes = new WildAttributeList(attributeString);
