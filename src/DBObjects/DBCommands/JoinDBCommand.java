@@ -1,17 +1,24 @@
 package DBObjects.DBCommands;
 
 import DBException.*;
-import DBObjects.DBTable;
-import DBObjects.TableAttribute;
+import DBObjects.*;
 
-import java.util.Arrays;
-
+/**
+ * JoinDBCommand performs an inner join on two tables. A return string of all rows
+ * where the attribute from one table's values matches the other will be set.
+ * The return string can be printed to represent the table.
+ */
 public class JoinDBCommand extends DBCommand {
 
-    DBTable tableToJoin;
-    TableAttribute primaryAttribute;
-    TableAttribute secondaryAttribute;
+    private DBTable tableToJoin;
 
+    /**
+     * Constructor for the JoinDBCommand. Takes a pre-processed string
+     * of arguments. There are no parenthetical lists for a JOIN command.
+     * @param joinArgs Pre-processed string for the command.
+     * @throws DBException Thrown if the command is empty or if parenthetical
+     * lists terminated the initial command.
+     */
     protected JoinDBCommand(String[] joinArgs) throws DBException {
         isEmptyCommand(joinArgs);
         if (joinArgs.length != 1){
@@ -22,8 +29,12 @@ public class JoinDBCommand extends DBCommand {
         tokenizedCommand = removeCommandName(tokenizedCommand);
     }
 
+    /**
+     * Parses and initialises objects for a JOIN command.
+     * @throws DBException Thrown if the tokenized command is set up incorrectly.
+     */
     @Override
-    public void prepareCommand() throws DBException {
+    protected void prepareCommand() throws DBException {
         int currentToken = 0;
 
         String primaryTable = getNextToken(tokenizedCommand, currentToken++);
@@ -42,8 +53,7 @@ public class JoinDBCommand extends DBCommand {
         if (!isNameValid(primaryAttributeString)){
             throw new InvalidCommandArgumentException("Primary attribute name was not valid.");
         }
-        primaryAttribute = new TableAttribute(primaryAttributeString);
-        tableForCommand.setJoinAttribute(primaryAttribute);
+        tableForCommand.setJoinAttribute(new TableAttribute(primaryAttributeString));
 
         String attributeAndString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
         compareStrings(attributeAndString, "AND");
@@ -52,47 +62,54 @@ public class JoinDBCommand extends DBCommand {
         if (!isNameValid(secondaryAttributeString)){
             throw new InvalidCommandArgumentException("Secondary attribute name was not valid.");
         }
-        secondaryAttribute = new TableAttribute(secondaryAttributeString);
-        tableToJoin.setJoinAttribute(secondaryAttribute);
+        tableToJoin.setJoinAttribute(new TableAttribute(secondaryAttributeString));
 
         checkCommandEnded(currentToken);
     }
 
-    public void setupTable(String tableName, DBJoinTableType type) throws DBException {
+    /**
+     * Sets up the primary and secondary tables for joining depending on
+     * the join table type.
+     * @param tableName Table to initialise.
+     * @param type Primary or Secondary table.
+     * @throws DBException Thrown if the working database is null.
+     */
+    protected void setupTable(String tableName, DBJoinTableType type) throws DBException {
         if (type == DBJoinTableType.PRIMARY){
             super.setupTable(tableName);
         }
         else {
-            if (tableName.length() == 0) {
-                throw new InvalidCommandArgumentException("No table name provided.");
-            }
-            if (!isNameValid(tableName)) {
-                throw new InvalidCommandArgumentException("Table name was invalid.");
-            }
-            if (workingDatabase == null) {
-                throw new NotUsingDBException("No working database has been selected.");
-            }
-            tableToJoin = new DBTable(tableName, workingDatabase);
-            tableToJoin.loadTableFile();
+            setupSecondaryTable(tableName);
         }
     }
 
+    /**
+     * Sets up the secondary table for joining. functionally the same as
+     * setupTable aside from the field it sets.
+     * @param tableName Table to create.
+     * @throws DBException Thrown if workingDatabase is null.
+     */
+    private void setupSecondaryTable(String tableName) throws DBException{
+        if (tableName.length() == 0) {
+            throw new InvalidCommandArgumentException("No table name provided.");
+        }
+        if (!isNameValid(tableName)) {
+            throw new InvalidCommandArgumentException("Table name was invalid.");
+        }
+
+        tableToJoin = new DBTable(tableName, workingDatabase);
+        tableToJoin.loadTableFile();
+    }
+
+    /**
+     * Joins two tables on the selected attributes. Creates a return string that
+     * will be used as the return message of the command.
+     * message to be printed.
+     * @throws DBException Thrown if table files cannot be loaded or attributes do not exist.
+     */
     @Override
-    public void executeCommand() throws DBException {
+    protected void executeCommand() throws DBException {
         DBTable jointTable = DBTable.joinTables(tableForCommand, tableToJoin);
         returnMessage = jointTable.printTable();
-    }
-
-    @Override
-    public String[] splitCommand(String commandString) {
-        return commandString.split("\\s+");
-    }
-
-    @Override
-    /**
-     *
-     */
-    public String[] removeCommandName(String[] tokenizedCommand) {
-        return Arrays.copyOfRange(tokenizedCommand, 1, tokenizedCommand.length);
     }
 }

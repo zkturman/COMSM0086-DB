@@ -2,17 +2,28 @@ package DBObjects.DBCommands;
 
 import DBException.*;
 import DBObjects.DBCommands.CommandLists.*;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * SelectDBCommand handles generating a return string that represents the contents
+ * of a table. The string can contain a combination of rows and attributes depending
+ * on the command's form.
+ */
 public class SelectDBCommand extends DBCommand{
 
-    String attributeString;
-    WildAttributeList selectAttributes;
-    CommandCondition selectConditions;
+    private String attributeString;
+    private WildAttributeList selectAttributes;
+    private CommandCondition selectConditions;
 
-    public SelectDBCommand(String[] selectArgs) throws DBException{
+    /**
+     * Constructor for a SelectDBCommand that takes a pre-processed string.
+     * The arguments contain optional parenthetical conditions. Non-parenthetical
+     * conditions and attributes are handled separately.
+     * @param selectArgs Pre-processed command string.
+     * @throws DBException Thrown if the command is empty
+     */
+    protected SelectDBCommand(String[] selectArgs) throws DBException{
         isEmptyCommand(selectArgs);
         if (selectArgs.length > 2){
             throw new InvalidCommandArgumentException("Select command has the incorrect form.");
@@ -25,8 +36,13 @@ public class SelectDBCommand extends DBCommand{
         }
     }
 
+    /**
+     * Parse and initialises objects for a SELECT command. Handles
+     * the WildAttributeList and Conditions of the SELECT command.
+     * @throws DBException Thrown if the tokenized command is incorrectly formatted.
+     */
     @Override
-    public void prepareCommand() throws DBException {
+    protected void prepareCommand() throws DBException {
         int currentToken = 0;
         prepareAttributes();
         String fromString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
@@ -43,18 +59,33 @@ public class SelectDBCommand extends DBCommand{
         }
     }
 
-    public void prepareAttributes() throws DBException {
+    /**
+     * Parses and configures objects to handles the attributes of
+     * a SELECT command.
+     * @throws DBException Thrown if the list is incorreclty formatted.
+     */
+    protected void prepareAttributes() throws DBException {
         selectAttributes = new WildAttributeList(attributeString);
         selectAttributes.parseList();
     }
 
-    public void prepareConditions() throws DBException {
+    /**
+     * Prepares conditions for a SELECT command. Conditions are
+     * optional for this command.
+     * @throws DBException Thrown if conditions are incorrectly formatted.
+     */
+    protected void prepareConditions() throws DBException {
         selectConditions = new CommandCondition(listString);
         selectConditions.parseList();
     }
 
+    /**
+     * Creates a return string to print table data. The return string can be
+     * for all attributes in a table or a custom selection.
+     * @throws DBException Thrown if conditions for a
+     */
     @Override
-    public void executeCommand() throws DBException {
+    protected void executeCommand() throws DBException {
         if (selectConditions != null){
             selectConditions.executeConditions(tableForCommand);
         }
@@ -66,8 +97,15 @@ public class SelectDBCommand extends DBCommand{
         }
     }
 
+    /**
+     * In addition to splitting the command on white spaces, the string also
+     * finds the attribute list between SELECT and FROM terms.
+     * @param commandString String to split.
+     * @return Tokenized command, excluding the attribute list.
+     * @throws DBException Thrown if there is no attribute list in the command.
+     */
     @Override
-    public String[] splitCommand(String commandString) throws DBException {
+    protected String[] splitCommand(String commandString) throws DBException {
         //get attribute list:
         Pattern attributePattern = Pattern.compile("(?<=select).*(?=from\\s+)", Pattern.CASE_INSENSITIVE);
         Matcher attributeMatcher = attributePattern.matcher(commandString);
@@ -96,5 +134,4 @@ public class SelectDBCommand extends DBCommand{
         }
         System.out.println("SelectDBCommand passed.");
     }
-
 }

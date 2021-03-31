@@ -3,11 +3,21 @@ package DBObjects.DBCommands;
 import DBException.*;
 import DBObjects.*;
 
+/**
+ * AlterDBCommand handles appending new attributes or deleting existing ones.
+ * Attribute values in table rows are removed during deletion.
+ */
 public class AlterDBCommand extends DBCommand {
     private TableAttribute attributeToAlter;
     private AlterType alterType;
 
-    public AlterDBCommand(String[] alterArgs) throws DBException{
+    /**
+     * Constructor for AlterDBCommand.
+     * @param alterArgs Preprocessed string for alter command.
+     * @throws DBException Thrown if arguments contain a parenthetical list or
+     * if the command is empty.
+     */
+    protected AlterDBCommand(String[] alterArgs) throws DBException{
         isEmptyCommand(alterArgs);
         commandString = alterArgs[0];
         tokenizedCommand = splitCommand(commandString);
@@ -17,21 +27,34 @@ public class AlterDBCommand extends DBCommand {
         }
     }
 
-    public void prepareCommand() throws DBException {
+    /**
+     * Parses the alter command and sets up the table and
+     * attribute to be modified.
+     * @throws DBException Thrown if arguments for command are incorrect.
+     */
+    protected void prepareCommand() throws DBException {
         int currentToken = 0;
         String tableString = getNextToken(tokenizedCommand, currentToken++).toUpperCase();
         compareStrings(tableString, "TABLE");
+
         String tableName = getNextToken(tokenizedCommand, currentToken++);
         setupTable(tableName);
+
         String alterationType = getNextToken(tokenizedCommand, currentToken++);
-        if (!convertStringToAlterType(alterationType)){
-            throw new InvalidCommandArgumentException("Invalid alteration type provided.");
-        }
+        convertStringToAlterType(alterationType);
+
         String attributeName = getNextToken(tokenizedCommand, currentToken++);
         setupAttribute(attributeName);
+
         checkCommandEnded(currentToken);
     }
 
+    /**
+     * Configures the attribute name of the alter command.
+     * @param attributeName Name of the attribute for the command.
+     * @throws DBException Thrown if the attribute name contains non-alphanumeric
+     * characters.
+     */
     private void setupAttribute(String attributeName) throws DBException {
         if (!isNameValid(attributeName)){
             throw new InvalidCommandArgumentException("Attribute name is invalid.");
@@ -39,7 +62,11 @@ public class AlterDBCommand extends DBCommand {
         attributeToAlter = new TableAttribute(attributeName);
     }
 
-    public void executeCommand() throws DBException {
+    /**
+     * Executes the alter command to remove or add a column to a table.
+     * @throws DBException Thrown if alteration fails or the commands alter type isn't set.
+     */
+    protected void executeCommand() throws DBException {
         switch(alterType){
             case ADD:
                 tableForCommand.appendAttribute(attributeToAlter);
@@ -52,16 +79,21 @@ public class AlterDBCommand extends DBCommand {
         }
     }
 
-    private boolean convertStringToAlterType(String alterString){
+    /**
+     * Configures what type of alter command is being performed. Not case sensitive.
+     * @param alterString Expected alter type from the tokenized command.
+     * @throws DBException Thrown if alterString is not ADD or DROP.
+     */
+    private void convertStringToAlterType(String alterString) throws DBException{
         switch(alterString.toUpperCase()){
             case "ADD":
                 alterType = AlterType.ADD;
-                return true;
+                break;
             case "DROP":
                 alterType = AlterType.DROP;
-                return true;
+                break;
             default:
-                return false;
+                throw new InvalidCommandArgumentException("Invalid alteration type provided.");
         }
     }
 }

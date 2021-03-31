@@ -65,17 +65,21 @@ public class NameValueList extends ValueList {
         boolean found = false, quote = false;
         while (!found && !quote && i < nameValuePair.length()){
             char c = nameValuePair.charAt(i++);
-            if (c == '='){
-                found = true;
-            }
-            if (c == '\''){
-                quote = true;
-            }
+            found = isExpectedChar(c, '=');
+            quote = isExpectedChar(c, '\'');
         }
-        if (!found){
+        checkHasEquals(found);
+        return i - 1;
+    }
+
+    private boolean isExpectedChar(char actualChar, char expectedChar){
+        return actualChar == expectedChar;
+    }
+
+    private void checkHasEquals(boolean hasEquals) throws DBException {
+        if (!hasEquals){
             throw new InvalidCommandArgumentException("Name value pair should contain an equal sign.");
         }
-        return i - 1;
     }
 
     public static void test(){
