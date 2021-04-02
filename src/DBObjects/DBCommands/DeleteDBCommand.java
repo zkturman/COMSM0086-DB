@@ -61,7 +61,7 @@ public class DeleteDBCommand extends DBCommand {
             throw new InvalidCommandArgumentException("Delete command expects condition.");
         }
         deleteConditions = new CommandCondition(listString);
-        deleteConditions.parseList();
+        deleteConditions.processList();
     }
 
     /**

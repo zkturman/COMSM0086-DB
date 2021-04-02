@@ -56,6 +56,6 @@ public class CreateDBCommand extends DropCreateDBCommand {
     @Override
     public void prepareList(String listString) throws DBException {
         attributesToParse = new AttributeList(listString);
-        attributesToParse.parseList();
+        attributesToParse.processList();
     }
 }

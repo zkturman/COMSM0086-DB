@@ -67,7 +67,7 @@ public class UpdateDBCommand extends DBCommand {
      */
     protected void prepareNameValues() throws DBException {
         updateNameValues = new NameValueList(nameValueString);
-        updateNameValues.parseList();
+        updateNameValues.processList();
     }
 
     /**
@@ -79,7 +79,7 @@ public class UpdateDBCommand extends DBCommand {
             throw new InvalidCommandArgumentException("Update command expects condition.");
         }
         updateConditions = new CommandCondition(listString);
-        updateConditions.parseList();
+        updateConditions.processList();
     }
 
     /**

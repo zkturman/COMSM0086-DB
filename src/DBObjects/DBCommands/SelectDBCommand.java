@@ -66,7 +66,7 @@ public class SelectDBCommand extends DBCommand{
      */
     protected void prepareAttributes() throws DBException {
         selectAttributes = new WildAttributeList(attributeString);
-        selectAttributes.parseList();
+        selectAttributes.processList();
     }
 
     /**
@@ -76,7 +76,7 @@ public class SelectDBCommand extends DBCommand{
      */
     protected void prepareConditions() throws DBException {
         selectConditions = new CommandCondition(listString);
-        selectConditions.parseList();
+        selectConditions.processList();
     }
 
     /**

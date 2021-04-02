@@ -56,7 +56,7 @@ public class InsertDBCommand extends DBCommand {
      */
     protected void prepareValueList(String valueList) throws DBException {
         valuesToInsert = new ValueList(valueList);
-        if (!valuesToInsert.parseList()){
+        if (!valuesToInsert.processList()){
             throw new InvalidCommandArgumentException("Insert expects values to insert.");
         }
     }
