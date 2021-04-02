@@ -13,7 +13,7 @@ public class DBServer {
                 System.out.println("Server Listening");
                 while(true) processNextConnection(serverSocket);
             } catch(IOException ioe) {
-                System.err.println(ioe);
+                System.err.println("File handling exception.");
             }
         }
 
@@ -26,7 +26,8 @@ public class DBServer {
                 System.out.println("Connection Established");
                 while(true) processNextCommand(socketReader, socketWriter);
             } catch(IOException ioe) {
-                System.err.println(ioe);
+                System.err.println("File handling exception.");
+                ioe.printStackTrace();
             } catch(NullPointerException npe) {
                 System.out.println("Connection Lost");
                 npe.printStackTrace();
@@ -50,14 +51,12 @@ public class DBServer {
                 socketWriter.write("[ERROR] " + de.toString());
             }
             socketWriter.write("\n" + ((char)4) + "\n");
-
             this.workingDatabase = dbStatement.getWorkingDatabase();
-            //return string of some sort for errors and success
 
             socketWriter.flush();
         }
 
-        public static void main(String args[])
+        public static void main(String[] args)
         {
             DBServer server = new DBServer(8888);
         }
