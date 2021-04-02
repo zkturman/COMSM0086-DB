@@ -210,8 +210,8 @@ public abstract class DBCommand extends DBObject {
      */
     protected void compareStrings(String tokenString, String expectedString) throws DBException{
         if (!tokenString.equals(expectedString)){
-            throw new DBServerException("String " + tokenString + " did not match the expected "
-                    + expectedString + ".");
+            throw new DBServerException("String " + tokenString + " did not match the expected " +
+                    expectedString + ".");
         }
     }
 
